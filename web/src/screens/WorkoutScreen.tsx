@@ -380,17 +380,22 @@ const WorkoutScreen: React.FC = () => {
     // Update previous phase ref for next call (synchronous)
     previousPhaseRef.current = analysis.phase;
 
-    // Update current analysis state
+    // Update current analysis state for real-time response
     setCurrentAnalysis(analysis);
 
-    // Stabilize feedback messages - only update every 2 seconds
+    // Stabilize feedback messages - only update every 2 seconds to prevent rapid changes
     if (feedbackTimeoutRef.current) {
-      clearTimeout(feedbackTimeoutRef.current);
+      // Don't clear existing timeout - let it complete for stability
+      return;
     }
 
+    // Update feedback immediately for real-time response
+    setStableFeedback(analysis.feedback);
+
+    // Set timeout to prevent feedback updates for 2 seconds
     feedbackTimeoutRef.current = setTimeout(() => {
-      setStableFeedback(analysis.feedback);
-    }, 100); // Small delay to prevent rapid changes
+      feedbackTimeoutRef.current = null;
+    }, 2000); // 2 second minimum between feedback updates
 
     // Track form scores for cumulative average calculation
     if (analysis.formScore > 0) {
@@ -607,14 +612,51 @@ const WorkoutScreen: React.FC = () => {
                     </span>
                   </div>
                   <div className="feedback-messages">
-                    {stableFeedback.map((message, index) => (
-                      <div key={index} className="feedback-item">
-                        <span className="feedback-icon">
-                          {currentAnalysis.isGoodForm ? "✅" : "⚠️"}
-                        </span>
-                        <span>{message}</span>
-                      </div>
-                    ))}
+                    {stableFeedback.slice(0, 3).map((message, index) => {
+                      // Determine feedback type based on message content
+                      let feedbackClass = "";
+                      let icon = "💪";
+
+                      if (
+                        message.includes("🚨 CRITICAL") ||
+                        message.includes("🔴")
+                      ) {
+                        feedbackClass = "critical";
+                        icon = "🚨";
+                      } else if (
+                        message.includes("⚠️") ||
+                        message.includes("TOO HIGH") ||
+                        message.includes("DEEPER")
+                      ) {
+                        feedbackClass = "warning";
+                        icon = "⚠️";
+                      } else if (
+                        message.includes("✅") ||
+                        message.includes("🏆") ||
+                        message.includes("PERFECT") ||
+                        message.includes("EXCELLENT")
+                      ) {
+                        feedbackClass = "success";
+                        icon = "✅";
+                      } else if (
+                        message.includes("👍") ||
+                        message.includes("Great") ||
+                        message.includes("Good")
+                      ) {
+                        feedbackClass = "success";
+                        icon = "👍";
+                      }
+
+                      return (
+                        <div
+                          key={index}
+                          className={`feedback-item ${feedbackClass}`}
+                        >
+                          <span className="feedback-icon">{icon}</span>
+                          <span>{message}</span>
+                        </div>
+                      );
+                    })}
                   </div>
                   <div className="angle-display">
                     <div className="angle-item">

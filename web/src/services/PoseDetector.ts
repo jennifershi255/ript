@@ -222,35 +222,112 @@ export class PoseDetector {
     
     const avgKneeAngle = (angles.leftKneeAngle + angles.rightKneeAngle) / 2;
     const avgHipAngle = (angles.leftHipAngle + angles.rightHipAngle) / 2;
-    
-    // Check knee alignment
     const kneeDifference = Math.abs(angles.leftKneeAngle - angles.rightKneeAngle);
-    if (kneeDifference > 15) {
-      feedback.push("Keep your knees aligned");
-      formScore -= 15;
+    
+    // Phase-specific feedback
+    switch (phase) {
+      case 'starting':
+        if (avgKneeAngle < 170) {
+          feedback.push("Stand up straight to begin");
+          formScore -= 10;
+        } else {
+          feedback.push("Ready to squat! Start going down");
+        }
+        break;
+        
+      case 'descending':
+        // Check knee alignment during descent
+        if (kneeDifference > 20) {
+          feedback.push("KNEES: Keep both knees aligned!");
+          formScore -= 20;
+        }
+        
+        // Check back posture during descent
+        if (angles.backAngle > this.SQUAT_THRESHOLDS.BACK_ANGLE_MAX) {
+          feedback.push("BACK: Keep chest up, don't lean forward!");
+          formScore -= 25;
+        }
+        
+        // Check if going down too fast
+        if (avgKneeAngle < 120) {
+          feedback.push("Good depth! Keep going down slowly");
+        } else {
+          feedback.push("Keep going down - bend your knees more");
+        }
+        break;
+        
+      case 'bottom':
+        // Critical depth check
+        if (avgKneeAngle > 110) {
+          feedback.push("TOO HIGH: Go deeper! Thighs parallel to ground");
+          formScore -= 30;
+        } else if (avgKneeAngle > 90) {
+          feedback.push("DEEPER: Almost there, go a bit lower");
+          formScore -= 15;
+        } else {
+          feedback.push("PERFECT DEPTH: Great squat!");
+        }
+        
+        // Knee alignment at bottom
+        if (kneeDifference > 15) {
+          feedback.push("KNEES: Keep knees aligned at bottom!");
+          formScore -= 20;
+        }
+        
+        // Back posture at bottom
+        if (angles.backAngle > this.SQUAT_THRESHOLDS.BACK_ANGLE_MAX) {
+          feedback.push("BACK: Keep chest up, core tight!");
+          formScore -= 25;
+        }
+        
+        // Hip positioning
+        if (avgHipAngle < this.SQUAT_THRESHOLDS.HIP_ANGLE_MIN) {
+          feedback.push("HIPS: Push hips back more");
+          formScore -= 15;
+        }
+        break;
+        
+      case 'ascending':
+        // Check for proper ascent
+        if (angles.backAngle > this.SQUAT_THRESHOLDS.BACK_ANGLE_MAX) {
+          feedback.push("BACK: Keep chest up while rising!");
+          formScore -= 20;
+        }
+        
+        if (kneeDifference > 15) {
+          feedback.push("KNEES: Keep knees aligned while rising");
+          formScore -= 15;
+        }
+        
+        if (avgKneeAngle > 120) {
+          feedback.push("Great! Keep pushing up to standing");
+        } else {
+          feedback.push("Push through your heels, drive up!");
+        }
+        break;
     }
     
-    // Check squat depth
-    if (phase === 'bottom' && avgKneeAngle > 100) {
-      feedback.push("Go deeper - thighs should be parallel to ground");
-      formScore -= 20;
+    // Overall posture warnings (always check)
+    if (kneeDifference > 25) {
+      feedback.push("CRITICAL: Major knee misalignment!");
+      formScore -= 30;
     }
     
-    // Check back posture
-    if (angles.backAngle > this.SQUAT_THRESHOLDS.BACK_ANGLE_MAX) {
-      feedback.push("Keep your back straight - don't lean forward too much");
-      formScore -= 25;
+    if (angles.backAngle > 160) {
+      feedback.push("CRITICAL: Back too rounded!");
+      formScore -= 35;
     }
     
-    // Check hip angle
-    if (avgHipAngle < this.SQUAT_THRESHOLDS.HIP_ANGLE_MIN && phase === 'bottom') {
-      feedback.push("Push your hips back more");
-      formScore -= 15;
+    // Positive reinforcement for excellent form
+    if (formScore >= 90 && phase === 'bottom') {
+      feedback.push("🏆 EXCELLENT FORM! You're crushing it!");
+    } else if (formScore >= 80) {
+      feedback.push("Good form! Minor adjustments needed");
     }
     
-    // Positive feedback for good form
+    // If no specific feedback, give encouragement
     if (feedback.length === 0) {
-      feedback.push("Great form! Keep it up!");
+      feedback.push("Keep going! You're doing great!");
     }
     
     return {
