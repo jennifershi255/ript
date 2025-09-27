@@ -8,7 +8,7 @@ import {
   Alert,
   StatusBar
 } from 'react-native';
-import { Camera } from 'expo-camera';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 // TensorFlow imports removed for now - will be added back when implementing real pose detection
 import Svg, { Circle, Line, Text as SvgText } from 'react-native-svg';
 
@@ -32,23 +32,25 @@ export default function CameraScreen({ route, navigation }) {
     endWorkoutSession
   } = useWorkout();
 
-  const [hasPermission, setHasPermission] = useState(null);
-  const [cameraType, setCameraType] = useState(Camera.Constants.Type.front);
+  const [permission, requestPermission] = useCameraPermissions();
+  const [cameraType, setCameraType] = useState('front');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [currentPose, setCurrentPose] = useState(null);
   const [feedback, setFeedback] = useState([]);
   const [formScore, setFormScore] = useState(100);
   const [repPhase, setRepPhase] = useState('starting');
+  const [squatState, setSquatState] = useState('standing'); // 'standing', 'descending', 'bottom', 'ascending'
+  const [lastKneeAngle, setLastKneeAngle] = useState(null);
+  const [repInProgress, setRepInProgress] = useState(false);
   
   const cameraRef = useRef(null);
   const poseDetector = useRef(null);
   const analysisInterval = useRef(null);
 
   useEffect(() => {
-    (async () => {
-      const { status } = await Camera.requestCameraPermissionsAsync();
-      setHasPermission(status === 'granted');
-    })();
+    if (!permission) {
+      requestPermission();
+    }
 
     // Initialize pose detector
     initializePoseDetector();
@@ -61,12 +63,12 @@ export default function CameraScreen({ route, navigation }) {
   }, []);
 
   useEffect(() => {
-    if (isRecording && hasPermission) {
+    if (isRecording && permission?.granted) {
       startPoseAnalysis();
     } else {
       stopPoseAnalysis();
     }
-  }, [isRecording, hasPermission]);
+  }, [isRecording, permission?.granted]);
 
   const initializePoseDetector = async () => {
     try {
@@ -78,14 +80,90 @@ export default function CameraScreen({ route, navigation }) {
     }
   };
 
+  // Calculate angle between three points
+  const calculateAngle = (point1, point2, point3) => {
+    if (!point1 || !point2 || !point3) return null;
+    
+    const radians = Math.atan2(point3.y - point2.y, point3.x - point2.x) - 
+                   Math.atan2(point1.y - point2.y, point1.x - point2.x);
+    let angle = Math.abs(radians * 180.0 / Math.PI);
+    
+    if (angle > 180.0) {
+      angle = 360 - angle;
+    }
+    
+    return angle;
+  };
+
+  // Detect squat phases based on knee angle and hip position
+  const detectSquatPhase = (keypoints) => {
+    if (!keypoints) return null;
+
+    const leftHip = keypoints.left_hip;
+    const leftKnee = keypoints.left_knee;
+    const leftAnkle = keypoints.left_ankle;
+    const rightHip = keypoints.right_hip;
+    const rightKnee = keypoints.right_knee;
+    const rightAnkle = keypoints.right_ankle;
+
+    // Calculate knee angles
+    const leftKneeAngle = calculateAngle(leftHip, leftKnee, leftAnkle);
+    const rightKneeAngle = calculateAngle(rightHip, rightKnee, rightAnkle);
+    
+    if (!leftKneeAngle || !rightKneeAngle) return null;
+
+    const avgKneeAngle = (leftKneeAngle + rightKneeAngle) / 2;
+    
+    // Squat phase detection logic
+    let newPhase = 'standing';
+    let newState = squatState;
+    let shouldIncrementRep = false;
+
+    if (avgKneeAngle > 160) {
+      // Standing position
+      if (squatState === 'ascending' && repInProgress) {
+        // Completed a full rep
+        shouldIncrementRep = true;
+        setRepInProgress(false);
+        newPhase = 'completed';
+      } else {
+        newPhase = 'standing';
+      }
+      newState = 'standing';
+    } else if (avgKneeAngle > 120 && avgKneeAngle <= 160) {
+      // Descending or ascending
+      if (squatState === 'standing') {
+        newState = 'descending';
+        newPhase = 'descending';
+        setRepInProgress(true);
+      } else if (squatState === 'bottom') {
+        newState = 'ascending';
+        newPhase = 'ascending';
+      }
+    } else if (avgKneeAngle <= 120) {
+      // Bottom position
+      newState = 'bottom';
+      newPhase = 'bottom';
+    }
+
+    setSquatState(newState);
+    setLastKneeAngle(avgKneeAngle);
+    
+    return {
+      phase: newPhase,
+      kneeAngle: avgKneeAngle,
+      shouldIncrementRep
+    };
+  };
+
   const startPoseAnalysis = () => {
     if (analysisInterval.current) return;
 
     analysisInterval.current = setInterval(async () => {
-      if (cameraRef.current && !isAnalyzing) {
+      if (cameraRef.current && !isAnalyzing && permission?.granted) {
         await analyzePose();
       }
-    }, 200); // Analyze every 200ms (5 FPS)
+    }, 500); // Analyze every 500ms (2 FPS) to reduce load
   };
 
   const stopPoseAnalysis = () => {
@@ -98,6 +176,12 @@ export default function CameraScreen({ route, navigation }) {
   const analyzePose = async () => {
     try {
       setIsAnalyzing(true);
+
+      // Check if camera ref is still valid
+      if (!cameraRef.current) {
+        console.log('Camera ref is null, skipping analysis');
+        return;
+      }
 
       // Capture frame from camera
       const photo = await cameraRef.current.takePictureAsync({
@@ -112,38 +196,57 @@ export default function CameraScreen({ route, navigation }) {
       if (poseData && poseData.keypoints) {
         setCurrentPose(poseData);
 
-        // Analyze form using backend
-        const analysis = await analysisAPI.analyzePose(poseData, exercise, repCount);
+        // Detect squat phase locally
+        const squatAnalysis = detectSquatPhase(poseData.keypoints);
         
-        if (analysis.success) {
-          const { angles, feedback: feedbackMessages, formScore: score, phase } = analysis.analysis;
+        if (squatAnalysis) {
+          setRepPhase(squatAnalysis.phase);
           
-          // Update UI
-          setFeedback(feedbackMessages || []);
-          setFormScore(score || 100);
-          setRepPhase(phase || 'starting');
+          // Update form score based on knee angle and posture
+          let calculatedFormScore = 100;
+          if (squatAnalysis.kneeAngle < 90) {
+            calculatedFormScore = Math.max(60, 100 - (90 - squatAnalysis.kneeAngle) * 2);
+          } else if (squatAnalysis.kneeAngle > 170) {
+            calculatedFormScore = Math.max(70, 100 - (squatAnalysis.kneeAngle - 170) * 3);
+          }
+          
+          setFormScore(calculatedFormScore);
+          
+          // Generate feedback based on form
+          const feedbackMessages = [];
+          if (squatAnalysis.kneeAngle < 90) {
+            feedbackMessages.push("Go deeper! Squat lower.");
+          } else if (squatAnalysis.kneeAngle > 170) {
+            feedbackMessages.push("Good form! Keep it up.");
+          } else if (squatAnalysis.phase === 'bottom') {
+            feedbackMessages.push("Perfect depth! Now push up.");
+          } else if (squatAnalysis.phase === 'ascending') {
+            feedbackMessages.push("Drive through your heels!");
+          }
+          
+          setFeedback(feedbackMessages);
+
+          // Increment rep count only when a proper squat is completed
+          if (squatAnalysis.shouldIncrementRep) {
+            incrementRepCount();
+          }
 
           // Add data to workout context
           await addPoseData({
             keypoints: poseData.keypoints,
-            angles,
+            angles: { kneeAngle: squatAnalysis.kneeAngle },
             repNumber: repCount,
-            phase
+            phase: squatAnalysis.phase
           });
 
           // Add feedback if there are corrections
-          if (feedbackMessages && feedbackMessages.length > 0) {
+          if (feedbackMessages.length > 0) {
             await addFeedback({
               repNumber: repCount,
               messages: feedbackMessages,
-              formScore: score,
+              formScore: calculatedFormScore,
               timestamp: new Date().toISOString()
             });
-          }
-
-          // Check for rep completion (simplified logic)
-          if (phase === 'completed' && repPhase !== 'completed') {
-            incrementRepCount();
           }
         }
       }
@@ -183,6 +286,25 @@ export default function CameraScreen({ route, navigation }) {
     );
   };
 
+  const getJointColor = (jointName, confidence) => {
+    // Color joints based on their importance for squats and confidence
+    const importantJoints = ['left_hip', 'right_hip', 'left_knee', 'right_knee', 'left_ankle', 'right_ankle'];
+    const upperBodyJoints = ['left_shoulder', 'right_shoulder', 'left_elbow', 'right_elbow'];
+    
+    if (confidence < 0.5) return '#666666'; // Low confidence - gray
+    
+    if (importantJoints.includes(jointName)) {
+      // Important joints for squats - green to red based on form score
+      return formScore > 80 ? '#00ff00' : formScore > 60 ? '#ffff00' : '#ff4500';
+    } else if (upperBodyJoints.includes(jointName)) {
+      // Upper body - blue tones
+      return formScore > 70 ? '#00bfff' : '#4169e1';
+    } else {
+      // Other joints - purple
+      return '#9370db';
+    }
+  };
+
   const renderPoseOverlay = () => {
     if (!currentPose || !currentPose.keypoints) return null;
 
@@ -194,15 +316,20 @@ export default function CameraScreen({ route, navigation }) {
       <Svg style={StyleSheet.absoluteFillObject} width={width} height={height}>
         {/* Draw pose skeleton */}
         {Object.entries(keypoints).map(([name, point], index) => {
-          if (point.visibility > 0.5) {
+          if (point.visibility > 0.3) {
+            const jointColor = getJointColor(name, point.visibility);
+            const radius = point.visibility > 0.7 ? 6 : 4;
+            
             return (
               <Circle
                 key={index}
                 cx={point.x * scaleX}
                 cy={point.y * scaleY}
-                r="4"
-                fill={formScore > 70 ? '#00ff00' : '#ff0000'}
-                opacity={point.visibility}
+                r={radius}
+                fill={jointColor}
+                stroke="#ffffff"
+                strokeWidth="1"
+                opacity={Math.max(0.7, point.visibility)}
               />
             );
           }
@@ -211,8 +338,54 @@ export default function CameraScreen({ route, navigation }) {
 
         {/* Draw connections between keypoints */}
         {renderPoseConnections(keypoints, scaleX, scaleY)}
+        
+        {/* Add form quality indicator */}
+        {formScore && (
+          <Circle
+            cx={width - 60}
+            cy={120}
+            r="25"
+            fill={formScore > 80 ? '#00ff00' : formScore > 60 ? '#ffff00' : '#ff4500'}
+            opacity="0.8"
+          />
+        )}
+        
+        {/* Add knee angle indicator */}
+        {lastKneeAngle && (
+          <SvgText
+            x={width - 60}
+            y={160}
+            fontSize="12"
+            fill="#ffffff"
+            textAnchor="middle"
+            fontWeight="bold"
+          >
+            {Math.round(lastKneeAngle)}°
+          </SvgText>
+        )}
       </Svg>
     );
+  };
+
+  const getConnectionColor = (start, end) => {
+    const legConnections = [
+      'left_hip-left_knee', 'left_knee-left_ankle', 
+      'right_hip-right_knee', 'right_knee-right_ankle'
+    ];
+    const torsoConnections = [
+      'left_shoulder-right_shoulder', 'left_hip-right_hip',
+      'left_shoulder-left_hip', 'right_shoulder-right_hip'
+    ];
+    
+    const connectionKey = `${start}-${end}`;
+    
+    if (legConnections.includes(connectionKey)) {
+      return formScore > 80 ? '#00ff00' : formScore > 60 ? '#ffff00' : '#ff4500';
+    } else if (torsoConnections.includes(connectionKey)) {
+      return formScore > 70 ? '#00bfff' : '#4169e1';
+    } else {
+      return '#9370db';
+    }
   };
 
   const renderPoseConnections = (keypoints, scaleX, scaleY) => {
@@ -235,7 +408,11 @@ export default function CameraScreen({ route, navigation }) {
       const startPoint = keypoints[start];
       const endPoint = keypoints[end];
       
-      if (startPoint && endPoint && startPoint.visibility > 0.5 && endPoint.visibility > 0.5) {
+      if (startPoint && endPoint && startPoint.visibility > 0.4 && endPoint.visibility > 0.4) {
+        const connectionColor = getConnectionColor(start, end);
+        const strokeWidth = ['left_hip', 'right_hip', 'left_knee', 'right_knee'].includes(start) || 
+                           ['left_hip', 'right_hip', 'left_knee', 'right_knee'].includes(end) ? 3 : 2;
+        
         return (
           <Line
             key={index}
@@ -243,9 +420,9 @@ export default function CameraScreen({ route, navigation }) {
             y1={startPoint.y * scaleY}
             x2={endPoint.x * scaleX}
             y2={endPoint.y * scaleY}
-            stroke={formScore > 70 ? '#00ff00' : '#ff0000'}
-            strokeWidth="2"
-            opacity="0.7"
+            stroke={connectionColor}
+            strokeWidth={strokeWidth}
+            opacity="0.8"
           />
         );
       }
@@ -253,11 +430,11 @@ export default function CameraScreen({ route, navigation }) {
     });
   };
 
-  if (hasPermission === null) {
+  if (!permission) {
     return <View style={styles.container}><Text>Requesting camera permission...</Text></View>;
   }
 
-  if (hasPermission === false) {
+  if (!permission.granted) {
     return (
       <View style={styles.container}>
         <Text style={styles.errorText}>No access to camera</Text>
@@ -273,11 +450,10 @@ export default function CameraScreen({ route, navigation }) {
       <StatusBar hidden />
       
       {/* Camera View */}
-      <Camera
+      <CameraView
         ref={cameraRef}
         style={styles.camera}
-        type={cameraType}
-        ratio="16:9"
+        facing={cameraType}
       >
         {/* Pose Overlay */}
         {renderPoseOverlay()}
@@ -313,9 +489,9 @@ export default function CameraScreen({ route, navigation }) {
           <TouchableOpacity
             style={styles.controlButton}
             onPress={() => setCameraType(
-              cameraType === Camera.Constants.Type.back
-                ? Camera.Constants.Type.front
-                : Camera.Constants.Type.back
+              cameraType === 'back'
+                ? 'front'
+                : 'back'
             )}
           >
             <Text style={styles.controlButtonText}>Flip</Text>
@@ -345,7 +521,7 @@ export default function CameraScreen({ route, navigation }) {
         <View style={styles.phaseIndicator}>
           <Text style={styles.phaseText}>{repPhase}</Text>
         </View>
-      </Camera>
+      </CameraView>
     </View>
   );
 }
