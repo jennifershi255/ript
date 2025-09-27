@@ -498,68 +498,72 @@ const WorkoutScreen: React.FC = () => {
             )}
           </div>
 
-          <div className="feedback-panel">
-            <h3>Real-time Analysis</h3>
-            {currentAnalysis ? (
-              <>
-                <div className="analysis-phase">
-                  <span className="phase-label">Phase:</span>
-                  <span className={`phase-value ${currentAnalysis.phase}`}>
-                    {currentAnalysis.phase.toUpperCase()}
-                  </span>
-                </div>
-                <div className="feedback-messages">
-                  {currentAnalysis.feedback.map((message, index) => (
-                    <div key={index} className="feedback-item">
-                      <span className="feedback-icon">
-                        {currentAnalysis.isGoodForm ? "✅" : "⚠️"}
+          <div className="analysis-section">
+            <div className="feedback-panel">
+              <h3>Real-time Analysis</h3>
+              {currentAnalysis ? (
+                <>
+                  <div className="analysis-phase">
+                    <span className="phase-label">Phase:</span>
+                    <span className={`phase-value ${currentAnalysis.phase}`}>
+                      {currentAnalysis.phase.toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="feedback-messages">
+                    {currentAnalysis.feedback.map((message, index) => (
+                      <div key={index} className="feedback-item">
+                        <span className="feedback-icon">
+                          {currentAnalysis.isGoodForm ? "✅" : "⚠️"}
+                        </span>
+                        <span>{message}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="angle-display">
+                    <div className="angle-item">
+                      <span>Left Knee:</span>
+                      <span>
+                        {Math.round(currentAnalysis.angles.leftKneeAngle)}°
                       </span>
-                      <span>{message}</span>
                     </div>
-                  ))}
+                    <div className="angle-item">
+                      <span>Right Knee:</span>
+                      <span>
+                        {Math.round(currentAnalysis.angles.rightKneeAngle)}°
+                      </span>
+                    </div>
+                    <div className="angle-item">
+                      <span>Back Angle:</span>
+                      <span>
+                        {Math.round(currentAnalysis.angles.backAngle)}°
+                      </span>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="no-analysis">
+                  <p>Start recording to see real-time form analysis</p>
                 </div>
-                <div className="angle-display">
-                  <div className="angle-item">
-                    <span>Left Knee:</span>
-                    <span>
-                      {Math.round(currentAnalysis.angles.leftKneeAngle)}°
-                    </span>
-                  </div>
-                  <div className="angle-item">
-                    <span>Right Knee:</span>
-                    <span>
-                      {Math.round(currentAnalysis.angles.rightKneeAngle)}°
-                    </span>
-                  </div>
-                  <div className="angle-item">
-                    <span>Back Angle:</span>
-                    <span>{Math.round(currentAnalysis.angles.backAngle)}°</span>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <div className="no-analysis">
-                <p>Start recording to see real-time form analysis</p>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
 
-          <div className="workout-stats">
-            <div className="stat-box">
-              <div className="stat-number">
-                {currentAnalysis ? currentAnalysis.repCount : 0}
+            <div className="workout-stats">
+              <div className="stat-box">
+                <div className="stat-number">
+                  {currentAnalysis ? currentAnalysis.repCount : 0}
+                </div>
+                <div className="stat-label">Reps</div>
               </div>
-              <div className="stat-label">Reps</div>
-            </div>
-            <div className="stat-box">
-              <div className="stat-number">
-                {currentAnalysis ? `${currentAnalysis.formScore}%` : "0%"}
+              <div className="stat-box">
+                <div className="stat-number">
+                  {currentAnalysis ? `${currentAnalysis.formScore}%` : "0%"}
+                </div>
+                <div className="stat-label">Form Score</div>
               </div>
-              <div className="stat-label">Form Score</div>
-            </div>
-            <div className="stat-box">
-              <div className="stat-number">2:30</div>
-              <div className="stat-label">Duration</div>
+              <div className="stat-box">
+                <div className="stat-number">2:30</div>
+                <div className="stat-label">Duration</div>
+              </div>
             </div>
           </div>
         </div>
