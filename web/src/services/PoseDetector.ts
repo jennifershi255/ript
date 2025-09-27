@@ -356,7 +356,12 @@ export class PoseDetector {
     this.canvasCtx.fillRect(10, 10, 100, 50);
     this.canvasCtx.fillStyle = '#FFFFFF';
     this.canvasCtx.font = '16px Arial';
-    this.canvasCtx.fillText('Pose Active', 15, 35);
+    
+    // Save context, flip text back to normal, then restore
+    this.canvasCtx.save();
+    this.canvasCtx.scale(-1, 1);
+    this.canvasCtx.fillText('Pose Active', -105, 35);
+    this.canvasCtx.restore();
     
     try {
       // Draw pose connections
@@ -396,19 +401,27 @@ export class PoseDetector {
     const leftKnee = landmarks[POSE_LANDMARK_INDICES.LEFT_KNEE];
     const rightKnee = landmarks[POSE_LANDMARK_INDICES.RIGHT_KNEE];
     
+    // Save context for text flipping
+    this.canvasCtx.save();
+    this.canvasCtx.scale(-1, 1);
+    
     if (leftKnee.visibility > 0.5) {
       const x = leftKnee.x * width;
       const y = leftKnee.y * height;
-      this.canvasCtx.strokeText(`${Math.round(angles.leftKneeAngle)}°`, x + 10, y - 10);
-      this.canvasCtx.fillText(`${Math.round(angles.leftKneeAngle)}°`, x + 10, y - 10);
+      const text = `${Math.round(angles.leftKneeAngle)}°`;
+      this.canvasCtx.strokeText(text, -(x + 10 + 30), y - 10);
+      this.canvasCtx.fillText(text, -(x + 10 + 30), y - 10);
     }
     
     if (rightKnee.visibility > 0.5) {
       const x = rightKnee.x * width;
       const y = rightKnee.y * height;
-      this.canvasCtx.strokeText(`${Math.round(angles.rightKneeAngle)}°`, x - 40, y - 10);
-      this.canvasCtx.fillText(`${Math.round(angles.rightKneeAngle)}°`, x - 40, y - 10);
+      const text = `${Math.round(angles.rightKneeAngle)}°`;
+      this.canvasCtx.strokeText(text, -(x - 40 + 30), y - 10);
+      this.canvasCtx.fillText(text, -(x - 40 + 30), y - 10);
     }
+    
+    this.canvasCtx.restore();
   }
 
   // Initialize pose detection with video element

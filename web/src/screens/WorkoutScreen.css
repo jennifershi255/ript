@@ -28,26 +28,27 @@
 
 .workout-placeholder {
   display: grid;
-  grid-template-columns: 3fr 1fr;
+  grid-template-columns: 4fr 1fr;
   gap: 1rem;
   margin-bottom: 1rem;
-  height: calc(100vh - 200px);
+  height: calc(100vh - 150px);
 }
 
 .camera-placeholder {
   background: white;
   border-radius: 15px;
-  padding: 1rem;
+  padding: 0.75rem;
   text-align: center;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   height: 100%;
-  min-height: 600px;
+  min-height: calc(100vh - 300px);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   position: relative;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .camera-icon {
@@ -68,21 +69,27 @@
 
 .video-container {
   position: relative;
-  width: 100%;
-  height: 100%;
+  width: calc(100% - 1.5rem);
+  height: calc(100% - 1.5rem);
+  margin: 0.75rem;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .camera-video {
   width: 100%;
   height: 100%;
-  max-height: calc(100vh - 250px);
-  min-height: 600px;
+  max-height: calc(100vh - 240px);
+  min-height: calc(100vh - 360px);
   object-fit: cover;
-  border-radius: 15px;
+  border-radius: 10px;
   background: #000;
   display: block;
-  /* Remove mirroring - show natural camera view */
-  transform: scaleX(1);
+  box-sizing: border-box;
+  /* Remove mirroring - show natural camera view (not inverted) */
+  transform: scaleX(-1);
 }
 
 .pose-overlay {
@@ -91,12 +98,12 @@
   left: 0;
   width: 100%;
   height: 100%;
-  max-height: calc(100vh - 250px);
-  min-height: 600px;
-  border-radius: 15px;
+  border-radius: 10px;
   pointer-events: none;
   z-index: 2;
   transition: opacity 0.3s ease;
+  /* Mirror the pose overlay to match the flipped camera */
+  transform: scaleX(-1);
 }
 
 .pose-overlay.visible {
@@ -109,11 +116,7 @@
   display: none;
 }
 
-/* Debug styles */
-.pose-overlay {
-  border: 2px solid rgba(0, 255, 0, 0.3);
-  background: rgba(0, 0, 0, 0.1);
-}
+/* Debug styles - removed for production */
 
 /* Fullscreen video styling */
 .camera-video:fullscreen,
@@ -123,9 +126,11 @@
   height: 100vh;
   max-height: none;
   border-radius: 0;
-  object-fit: contain;
+  object-fit: cover;
   background: #000;
-  transform: scaleX(1);
+  margin: 0;
+  /* Keep the mirror effect in fullscreen too */
+  transform: scaleX(-1);
 }
 
 .camera-controls {
@@ -275,26 +280,45 @@
 
 @media (max-width: 768px) {
   .workout-content {
-    padding: 1rem;
+    padding: 0.5rem;
   }
   
   .workout-placeholder {
     grid-template-columns: 1fr;
-    height: calc(100vh - 150px);
+    height: calc(100vh - 120px);
+    gap: 0.5rem;
   }
   
   .camera-placeholder {
-    min-height: calc(100vh - 300px);
+    min-height: calc(100vh - 250px);
+    padding: 0.5rem;
   }
   
   .camera-video {
-    max-height: calc(100vh - 300px);
-    min-height: calc(100vh - 300px);
+    max-height: calc(100vh - 280px);
+    min-height: calc(100vh - 280px);
+    width: calc(100% - 1rem);
+    height: calc(100% - 1rem);
+    margin: 0.5rem;
   }
   
   .pose-overlay {
-    max-height: calc(100vh - 300px);
-    min-height: calc(100vh - 300px);
+    max-height: calc(100vh - 280px);
+    min-height: calc(100vh - 280px);
+    width: calc(100% - 1rem);
+    height: calc(100% - 1rem);
+    top: 0.5rem;
+    left: 0.5rem;
+  }
+  
+  .camera-controls {
+    top: 1rem;
+    right: 1rem;
+  }
+  
+  .recording-indicator {
+    top: 1rem;
+    left: 1rem;
   }
   
   .workout-stats {
