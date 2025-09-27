@@ -15,9 +15,13 @@
   font-weight: bold;
   color: #2c3e50;
   text-decoration: none;
+
 }
 
 .brand-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   height: 30px;
   width: auto;
 }
