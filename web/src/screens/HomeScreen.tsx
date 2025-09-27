@@ -4,43 +4,42 @@ import { useAuth } from "../context/AuthContext";
 import { useWorkout } from "../context/WorkoutContext";
 import Navigation from "../components/Navigation";
 import "./HomeScreen.css";
+import Aurora from "../components/Aurora";
+
+
 
 const EXERCISES = [
   {
     id: "squat",
-    name: "Squat",
-    description: "Lower body strength exercise",
-    icon: "🏋️‍♀️",
-    difficulty: "Beginner",
+    name: "squat",
+    description: "lower body strength exercise",
+    difficulty: "beginner",
     duration: "5-10 mins",
-    color: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+    color: "linear-gradient(135deg, #83EBFC 0%, #4A90E2 100%)",
   },
   {
     id: "pushup",
-    name: "Push-up",
-    description: "Upper body strength exercise",
-    icon: "💪",
-    difficulty: "Beginner",
+    name: "push-up",
+    description: "upper body strength exercise",
+    difficulty: "beginner",
     duration: "5-10 mins",
-    color: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+    color: "linear-gradient(135deg, #f59e0b 0%, #f97316 100%)",
   },
   {
     id: "deadlift",
-    name: "Deadlift",
-    description: "Full body compound exercise",
-    icon: "🏋️",
-    difficulty: "Intermediate",
+    name: "deadlift",
+    description: "full body compound exercise",
+    difficulty: "intermediate",
     duration: "10-15 mins",
-    color: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+    color: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
   },
   {
     id: "lunge",
-    name: "Lunge",
-    description: "Lower body unilateral exercise",
-    icon: "🦵",
-    difficulty: "Beginner",
+    name: "lunge",
+    description: "lower body unilateral exercise",
+    difficulty: "beginner",
     duration: "5-10 mins",
-    color: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
+    color: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
   },
 ];
 
@@ -82,47 +81,55 @@ const HomeScreen: React.FC = () => {
       className="exercise-card"
       style={{ animationDelay: `${index * 0.1}s` }}
     >
-      <button
-        onClick={() => handleStartWorkout(exercise)}
-        className="exercise-card-button"
-        disabled={isStarting === exercise.id}
-        style={{ background: exercise.color }}
-      >
-        <div className="exercise-card-content">
-          <div className="exercise-icon">{exercise.icon}</div>
-          <h3 className="exercise-name">{exercise.name}</h3>
-          <p className="exercise-description">{exercise.description}</p>
-
-          <div className="exercise-details">
-            <div className="exercise-detail">
-              <span className="detail-label">Level</span>
-              <span className="detail-value">{exercise.difficulty}</span>
-            </div>
-            <div className="exercise-detail">
-              <span className="detail-label">Duration</span>
-              <span className="detail-value">{exercise.duration}</span>
-            </div>
-          </div>
-
-          <div className="start-button">
-            {isStarting === exercise.id ? "Starting..." : "Start Workout"}
+      <div className="exercise-card-container">
+        <div className="exercise-card-header">
+          <div className="exercise-card-info">
+            <h3 className="exercise-name">{exercise.name}</h3>
+            <p className="exercise-description">{exercise.description}</p>
           </div>
         </div>
-      </button>
+
+        <div className="exercise-card-body">
+          <div className="exercise-info">
+            <div className="info-item">
+              <span className="info-label">Level:</span>
+              <span className="info-value">{exercise.difficulty}</span>
+            </div>
+            <div className="info-item">
+              <span className="info-label">Duration:</span>
+              <span className="info-value">{exercise.duration}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="exercise-card-footer">
+          <button
+            onClick={() => handleStartWorkout(exercise)}
+            className="exercise-start-button"
+            disabled={isStarting === exercise.id}
+            style={{ background: exercise.color }}
+          >
+            <span className="button-text">
+              {isStarting === exercise.id ? "Starting..." : "Start Workout"}
+            </span>
+            <div className="button-icon">→</div>
+          </button>
+        </div>
+      </div>
     </div>
   );
 
   const renderStatsCard = () => (
     <div className="stats-card">
-      <h3 className="stats-title">Your Progress</h3>
+      <h3 className="stats-title">your progress</h3>
       <div className="stats-row">
         <div className="stat-item">
           <div className="stat-value">{analytics?.totalSessions || 0}</div>
-          <div className="stat-label">Workouts</div>
+          <div className="stat-label">workouts</div>
         </div>
         <div className="stat-item">
           <div className="stat-value">{analytics?.totalReps || 0}</div>
-          <div className="stat-label">Total Reps</div>
+          <div className="stat-label">total reps</div>
         </div>
         <div className="stat-item">
           <div className="stat-value">
@@ -136,50 +143,40 @@ const HomeScreen: React.FC = () => {
 
   return (
     <div className="home-screen">
+      {/* Aurora Background */}
+      <Aurora
+        colorStops={["#83EBFC", "#B19EEF", "#5227FF"]}
+        blend={0.5}
+        amplitude={1.0}
+        speed={0.5}
+      />
+  
+      {/* Foreground content */}
       <Navigation />
-
+  
       <div className="home-content">
         {/* Header */}
         <div className="home-header">
           <h1 className="greeting">
-            Hello, {user?.profile?.firstName || user?.username || "Athlete"}! 👋
+            welcome to ript!
           </h1>
-          <p className="subtitle">Ready for your next workout?</p>
+          <p className="subtitle">ready for your next workout?</p>
         </div>
-
+  
         {/* Stats Card */}
         {renderStatsCard()}
-
+  
         {/* Exercise Selection */}
         <div className="exercises-section">
-          <h2 className="section-title">Choose Your Exercise</h2>
+          <h2 className="section-title">choose your exercise</h2>
           <p className="section-subtitle">
             AI-powered form analysis for perfect technique
           </p>
-
+  
           <div className="exercises-grid">
             {EXERCISES.map((exercise, index) =>
               renderExerciseCard(exercise, index)
             )}
-          </div>
-        </div>
-
-        {/* Quick Tips */}
-        <div className="tips-card">
-          <h3 className="tips-title">💡 Quick Tips</h3>
-          <div className="tips-list">
-            <div className="tip-item">
-              • Ensure good lighting for accurate pose detection
-            </div>
-            <div className="tip-item">
-              • Position camera at chest level, 6 feet away
-            </div>
-            <div className="tip-item">
-              • Wear fitted clothing for better tracking
-            </div>
-            <div className="tip-item">
-              • Follow the on-screen guidance for proper form
-            </div>
           </div>
         </div>
       </div>
