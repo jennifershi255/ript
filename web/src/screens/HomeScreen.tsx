@@ -11,33 +11,33 @@ import Aurora from "../components/Aurora";
 const EXERCISES = [
   {
     id: "squat",
-    name: "Squat",
-    description: "Lower body strength exercise",
-    difficulty: "Beginner",
+    name: "squat",
+    description: "lower body strength exercise",
+    difficulty: "beginner",
     duration: "5-10 mins",
     color: "linear-gradient(135deg, #83EBFC 0%, #4A90E2 100%)",
   },
   {
     id: "pushup",
-    name: "Push-up",
-    description: "Upper body strength exercise",
-    difficulty: "Beginner",
+    name: "push-up",
+    description: "upper body strength exercise",
+    difficulty: "beginner",
     duration: "5-10 mins",
     color: "linear-gradient(135deg, #f59e0b 0%, #f97316 100%)",
   },
   {
     id: "deadlift",
-    name: "Deadlift",
-    description: "Full body compound exercise",
-    difficulty: "Intermediate",
+    name: "deadlift",
+    description: "full body compound exercise",
+    difficulty: "intermediate",
     duration: "10-15 mins",
     color: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
   },
   {
     id: "lunge",
-    name: "Lunge",
-    description: "Lower body unilateral exercise",
-    difficulty: "Beginner",
+    name: "lunge",
+    description: "lower body unilateral exercise",
+    difficulty: "beginner",
     duration: "5-10 mins",
     color: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
   },
@@ -121,15 +121,15 @@ const HomeScreen: React.FC = () => {
 
   const renderStatsCard = () => (
     <div className="stats-card">
-      <h3 className="stats-title">Your Progress</h3>
+      <h3 className="stats-title">your progress</h3>
       <div className="stats-row">
         <div className="stat-item">
           <div className="stat-value">{analytics?.totalSessions || 0}</div>
-          <div className="stat-label">Workouts</div>
+          <div className="stat-label">workouts</div>
         </div>
         <div className="stat-item">
           <div className="stat-value">{analytics?.totalReps || 0}</div>
-          <div className="stat-label">Total Reps</div>
+          <div className="stat-label">total reps</div>
         </div>
         <div className="stat-item">
           <div className="stat-value">
@@ -158,9 +158,9 @@ const HomeScreen: React.FC = () => {
         {/* Header */}
         <div className="home-header">
           <h1 className="greeting">
-            Hello, {user?.profile?.firstName || user?.username || "Athlete"}!
+            welcome to ript!
           </h1>
-          <p className="subtitle">Ready for your next workout?</p>
+          <p className="subtitle">ready for your next workout?</p>
         </div>
   
         {/* Stats Card */}
@@ -168,7 +168,7 @@ const HomeScreen: React.FC = () => {
   
         {/* Exercise Selection */}
         <div className="exercises-section">
-          <h2 className="section-title">Choose Your Exercise</h2>
+          <h2 className="section-title">choose your exercise</h2>
           <p className="section-subtitle">
             AI-powered form analysis for perfect technique
           </p>

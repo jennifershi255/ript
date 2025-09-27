@@ -106,7 +106,6 @@
 .workout-exercise {
   font-weight: 600;
   color: var(--ink);
-  text-transform: capitalize;
 }
 
 .exercise-reps,
