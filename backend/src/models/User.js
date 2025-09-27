@@ -106,19 +106,27 @@ userSchema.methods.updateStats = function(workoutData) {
   const newAccuracy = workoutData.formAccuracy || 0;
   this.stats.averageFormAccuracy = ((currentAvg * (this.stats.totalWorkouts - 1)) + newAccuracy) / this.stats.totalWorkouts;
   
-  this.stats.lastWorkout = new Date();
-  
   // Update streak (simplified logic)
-  const lastWorkout = this.stats.lastWorkout;
+  const previousWorkout = this.stats.lastWorkout;
   const today = new Date();
-  const diffTime = Math.abs(today - lastWorkout);
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   
-  if (diffDays === 1) {
-    this.stats.streakDays += 1;
-  } else if (diffDays > 1) {
+  if (previousWorkout) {
+    const diffTime = Math.abs(today - previousWorkout);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 1) {
+      this.stats.streakDays += 1;
+    } else if (diffDays > 1) {
+      this.stats.streakDays = 1;
+    }
+    // If diffDays === 0 (same day), keep current streak
+  } else {
+    // First workout
     this.stats.streakDays = 1;
   }
+  
+  // Update last workout date
+  this.stats.lastWorkout = today;
 };
 
 module.exports = mongoose.model('User', userSchema);

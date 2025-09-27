@@ -65,7 +65,12 @@ interface WorkoutContextType extends WorkoutState {
     exercise: string,
     settings?: any
   ) => Promise<{ success: boolean; session?: WorkoutSession; error?: string }>;
-  endWorkoutSession: () => Promise<{
+  endWorkoutSession: (finalStats?: {
+    totalReps?: number;
+    correctReps?: number;
+    formAccuracy?: number;
+    duration?: number;
+  }) => Promise<{
     success: boolean;
     session?: WorkoutSession;
     error?: string;
@@ -312,7 +317,12 @@ export function WorkoutProvider({ children }: WorkoutProviderProps) {
   };
 
   // End workout session
-  const endWorkoutSession = async () => {
+  const endWorkoutSession = async (finalStats?: {
+    totalReps?: number;
+    correctReps?: number;
+    formAccuracy?: number;
+    duration?: number;
+  }) => {
     try {
       if (!state.currentSession) {
         throw new Error("No active session to end");
@@ -320,7 +330,10 @@ export function WorkoutProvider({ children }: WorkoutProviderProps) {
 
       dispatch({ type: WORKOUT_ACTIONS.SET_LOADING, payload: true });
 
-      const response = await workoutAPI.endSession(state.currentSession._id);
+      const response = await workoutAPI.endSession(
+        state.currentSession._id,
+        finalStats
+      );
 
       if (response.success) {
         dispatch({ type: WORKOUT_ACTIONS.END_SESSION });

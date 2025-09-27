@@ -541,7 +541,14 @@ export class PoseDetector {
     // Initialize camera
     this.camera = new Camera(videoElement, {
       onFrame: async () => {
-        await this.pose.send({ image: videoElement });
+        // Check if pose detector is still valid before sending
+        if (!this.isDisposed && this.pose && this.isInitialized) {
+          try {
+            await this.pose.send({ image: videoElement });
+          } catch (error) {
+            console.warn('Error sending frame to pose detector:', error);
+          }
+        }
       },
       width,
       height
@@ -562,8 +569,13 @@ export class PoseDetector {
 
   // Stop pose detection
   public stop(): void {
-    if (this.camera) {
-      this.camera.stop();
+    console.log('Stopping pose detection...');
+    try {
+      if (this.camera) {
+        this.camera.stop();
+      }
+    } catch (error) {
+      console.warn('Error stopping camera:', error);
     }
   }
 
@@ -594,8 +606,16 @@ export class PoseDetector {
     }
     
     console.log('Disposing PoseDetector...');
-    this.isDisposed = true;
     
+    // Set disposed flag first to prevent any new operations
+    this.isDisposed = true;
+    this.isInitialized = false;
+    
+    // Clear callbacks first to prevent any pending calls
+    this.onResultsCallback = null;
+    this.onAnalysisCallback = null;
+    
+    // Stop camera first
     try {
       if (this.camera) {
         console.log('Stopping camera...');
@@ -606,23 +626,23 @@ export class PoseDetector {
       console.warn('Error stopping camera:', error);
     }
     
-    try {
-      if (this.pose && this.isInitialized) {
-        console.log('Closing pose...');
-        this.pose.close();
-        this.pose = null as any;
+    // Small delay to ensure camera stops before closing pose
+    setTimeout(() => {
+      try {
+        if (this.pose) {
+          console.log('Closing pose...');
+          this.pose.close();
+          this.pose = null as any;
+        }
+      } catch (error) {
+        console.warn('Error closing pose:', error);
       }
-    } catch (error) {
-      console.warn('Error closing pose:', error);
-    }
+    }, 100);
     
     // Clear references
     this.videoElement = null;
     this.canvasElement = null;
     this.canvasCtx = null;
-    this.onResultsCallback = null;
-    this.onAnalysisCallback = null;
-    this.isInitialized = false;
     
     console.log('PoseDetector disposed successfully');
   }

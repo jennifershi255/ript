@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useWorkout } from "../context/WorkoutContext";
+import { useAuth } from "../context/AuthContext";
 import Navigation from "../components/Navigation";
 import {
   PoseDetector,
@@ -13,7 +14,21 @@ import "./WorkoutScreen.css";
 const WorkoutScreen: React.FC = () => {
   const { exercise } = useParams<{ exercise: string }>();
   const navigate = useNavigate();
-  const { isRecording, startRecording, stopRecording, repCount } = useWorkout();
+  const workoutContext = useWorkout();
+  const { loadUser } = useAuth();
+  const {
+    isRecording,
+    startRecording,
+    stopRecording,
+    repCount,
+    currentSession,
+    startWorkoutSession,
+    endWorkoutSession,
+    incrementRepCount,
+    resetRepCount,
+    addPoseData,
+    addFeedback,
+  } = workoutContext;
 
   const [isCamera, setIsCamera] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -54,14 +69,23 @@ const WorkoutScreen: React.FC = () => {
         stopRecording();
       }
 
-      // Stop pose detection
+      // Stop pose detection first
       if (poseDetector) {
-        console.log("Disposing pose detector...");
+        console.log("Stopping and disposing pose detector...");
         try {
-          poseDetector.dispose();
+          // Stop detection first
+          poseDetector.stop();
+          // Then dispose after a brief delay
+          setTimeout(() => {
+            try {
+              poseDetector.dispose();
+            } catch (error) {
+              console.warn("Error disposing pose detector:", error);
+            }
+          }, 200);
           setPoseDetector(null);
         } catch (error) {
-          console.warn("Error disposing pose detector:", error);
+          console.warn("Error stopping pose detector:", error);
         }
       }
 
@@ -76,6 +100,48 @@ const WorkoutScreen: React.FC = () => {
           setIsCamera(false);
         } catch (error) {
           console.warn("Error stopping camera stream:", error);
+        }
+      }
+
+      // Save workout statistics to backend
+      if (currentSession) {
+        console.log("Saving workout statistics...");
+        try {
+          // Update session with final statistics
+          const finalStats = {
+            totalReps: totalReps,
+            correctReps: Math.round(
+              totalReps * (getCumulativeFormScore() / 100)
+            ),
+            formAccuracy: getCumulativeFormScore(),
+            duration: Math.floor(
+              (Date.now() - new Date(currentSession.startTime).getTime()) / 1000
+            ),
+          };
+
+          console.log("Final workout stats:", finalStats);
+
+          // End the workout session with statistics
+          const result = await workoutContext.endWorkoutSession(finalStats);
+
+          if (result.success) {
+            console.log("Workout session saved successfully:", result.session);
+
+            // Refresh user data and analytics to get updated stats
+            try {
+              await loadUser();
+              await workoutContext.loadAnalytics();
+              console.log(
+                "User stats and analytics refreshed after workout completion"
+              );
+            } catch (error) {
+              console.error("Error refreshing user stats:", error);
+            }
+          } else {
+            console.error("Failed to save workout session:", result.error);
+          }
+        } catch (error) {
+          console.error("Error saving workout statistics:", error);
         }
       }
 
@@ -97,6 +163,28 @@ const WorkoutScreen: React.FC = () => {
       isRecording
     );
     try {
+      // Start workout session if not already started
+      if (!currentSession && exercise) {
+        console.log("Starting workout session for exercise:", exercise);
+        const sessionResult = await startWorkoutSession(exercise, {
+          difficulty: "beginner",
+          feedbackMode: "real_time",
+          audioFeedback: true,
+          visualFeedback: true,
+        });
+
+        if (!sessionResult.success) {
+          console.error(
+            "Failed to start workout session:",
+            sessionResult.error
+          );
+          alert("Failed to start workout session. Please try again.");
+          return;
+        }
+
+        console.log("Workout session started:", sessionResult.session);
+      }
+
       if (!isCamera) {
         console.log("Requesting camera access...");
         // Request camera access
@@ -131,6 +219,7 @@ const WorkoutScreen: React.FC = () => {
       setStableFeedback([]);
       setLastBottomTime(0);
       previousPhaseRef.current = undefined;
+      resetRepCount();
 
       console.log("Calling startRecording()");
       startRecording();
@@ -160,6 +249,7 @@ const WorkoutScreen: React.FC = () => {
 
     if (poseDetector && !isDisposing) {
       try {
+        console.log("Stopping pose detection...");
         poseDetector.stop();
       } catch (error) {
         console.warn("Error stopping pose detector:", error);
@@ -271,7 +361,15 @@ const WorkoutScreen: React.FC = () => {
           timestamp: new Date().toISOString(),
           keypoints: convertLandmarksToBackendFormat(results.poseLandmarks),
           confidence: calculateAverageConfidence(results.poseLandmarks),
+          isGoodForm: currentAnalysis?.formScore
+            ? currentAnalysis.formScore > 70
+            : false,
+          repNumber: totalReps,
+          phase: currentAnalysis?.phase || "starting",
         };
+
+        // Store pose data in workout context (which will send to backend)
+        await addPoseData(poseData);
 
         // Send to backend for analysis (optional - we're using local analysis for real-time feedback)
         // const backendAnalysis = await analysisAPI.analyzePose(poseData, exercise, currentAnalysis?.repCount || 0);
@@ -374,6 +472,7 @@ const WorkoutScreen: React.FC = () => {
         }`
       );
       setTotalReps((prev) => prev + 1);
+      incrementRepCount(); // Also update the workout context
       setLastBottomTime(currentTime);
     }
 
@@ -409,6 +508,45 @@ const WorkoutScreen: React.FC = () => {
       // Update cumulative totals
       setTotalFormScoreSum((prev) => prev + analysis.formScore);
       setFormScoreCount((prev) => prev + 1);
+    }
+
+    // Log feedback to workout context
+    if (analysis.feedback && analysis.feedback.length > 0) {
+      analysis.feedback.forEach(async (message) => {
+        // Determine error type and severity from message content
+        let errorType = undefined;
+        let severity = "moderate";
+
+        if (message.includes("CRITICAL") || message.includes("🚨")) {
+          severity = "major";
+          if (message.includes("knee")) errorType = "knees_inward";
+          else if (message.includes("back")) errorType = "back_rounded";
+          else if (message.includes("depth")) errorType = "shallow_depth";
+        } else if (
+          message.includes("⚠️") ||
+          message.includes("TOO HIGH") ||
+          message.includes("DEEPER")
+        ) {
+          severity = "moderate";
+          errorType = "shallow_depth";
+        }
+
+        const feedbackData = {
+          timestamp: new Date().toISOString(),
+          repNumber: totalReps,
+          errorType,
+          severity,
+          message,
+          correctionGiven: message,
+          userResponse: "ignored", // Default, could be updated based on subsequent form improvement
+        };
+
+        try {
+          await addFeedback(feedbackData);
+        } catch (error) {
+          console.error("Error logging feedback:", error);
+        }
+      });
     }
   };
 

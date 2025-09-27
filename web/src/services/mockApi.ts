@@ -26,8 +26,8 @@ const mockUsers = [
   }
 ];
 
-// Mock workout sessions
-const mockWorkoutSessions = [
+// Mock workout sessions - will be updated as new workouts are completed
+let mockWorkoutSessions = [
   {
     _id: '1',
     exercise: 'squat',
@@ -47,6 +47,9 @@ const mockWorkoutSessions = [
     duration: 240
   }
 ];
+
+// Store active sessions
+let activeSessions: any = {};
 
 export const mockAuthAPI = {
   login: async (email: string, password: string) => {
@@ -123,25 +126,55 @@ export const mockWorkoutAPI = {
       settings: sessionData.settings || {}
     };
     
+    // Store the active session
+    activeSessions[session._id] = session;
+    
     return {
       success: true,
       session
     };
   },
 
-  endSession: async (sessionId: string) => {
+  endSession: async (sessionId: string, finalStats?: any) => {
     await delay(800);
     
+    // Get the active session
+    const activeSession = activeSessions[sessionId];
+    if (!activeSession) {
+      throw new Error('Session not found');
+    }
+    
+    // Update session with final stats if provided, otherwise use defaults
     const session = {
-      _id: sessionId,
+      ...activeSession,
       endTime: new Date().toISOString(),
-      totalReps: Math.floor(Math.random() * 20) + 10,
-      correctReps: Math.floor(Math.random() * 15) + 8,
-      formAccuracy: Math.floor(Math.random() * 20) + 75,
-      duration: Math.floor(Math.random() * 300) + 180
+      totalReps: finalStats?.totalReps || Math.floor(Math.random() * 20) + 10,
+      correctReps: finalStats?.correctReps || Math.floor(Math.random() * 15) + 8,
+      formAccuracy: finalStats?.formAccuracy || Math.floor(Math.random() * 20) + 75,
+      duration: finalStats?.duration || Math.floor(Math.random() * 300) + 180
     };
     
-    session.formAccuracy = Math.round((session.correctReps / session.totalReps) * 100);
+    // Add completed session to history
+    mockWorkoutSessions.unshift(session);
+    
+    // Update user stats
+    const user = mockUsers[0];
+    user.stats.totalWorkouts += 1;
+    user.stats.totalReps += session.totalReps;
+    
+    // Calculate new average form accuracy
+    const currentAvg = user.stats.averageFormAccuracy;
+    const newAccuracy = session.formAccuracy;
+    user.stats.averageFormAccuracy = Math.round(((currentAvg * (user.stats.totalWorkouts - 1)) + newAccuracy) / user.stats.totalWorkouts);
+    
+    // Update streak (simplified)
+    user.stats.streakDays += 1;
+    
+    // Remove from active sessions
+    delete activeSessions[sessionId];
+    
+    console.log('Mock API: Updated user stats:', user.stats);
+    console.log('Mock API: Session completed:', session);
     
     return {
       success: true,
@@ -166,17 +199,34 @@ export const mockWorkoutAPI = {
   getAnalytics: async (period: string = '30d') => {
     await delay(700);
     
+    // Calculate analytics from actual user stats and workout history
+    const user = mockUsers[0];
+    const recentSessions = mockWorkoutSessions.slice(0, 10); // Last 10 sessions
+    
+    // Calculate exercise breakdown
+    const exerciseBreakdown: any = {};
+    recentSessions.forEach(session => {
+      if (!exerciseBreakdown[session.exercise]) {
+        exerciseBreakdown[session.exercise] = { reps: 0, totalAccuracy: 0, count: 0 };
+      }
+      exerciseBreakdown[session.exercise].reps += session.totalReps;
+      exerciseBreakdown[session.exercise].totalAccuracy += session.formAccuracy;
+      exerciseBreakdown[session.exercise].count += 1;
+    });
+    
+    const exerciseBreakdownArray = Object.entries(exerciseBreakdown).map(([exercise, data]: [string, any]) => ({
+      exercise,
+      formAccuracy: Math.round(data.totalAccuracy / data.count),
+      reps: data.reps
+    }));
+    
     return {
       success: true,
       analytics: {
-        totalSessions: 15,
-        totalReps: 450,
-        averageFormAccuracy: 85,
-        exerciseBreakdown: [
-          { exercise: 'squat', formAccuracy: 85, reps: 200 },
-          { exercise: 'pushup', formAccuracy: 87, reps: 150 },
-          { exercise: 'deadlift', formAccuracy: 82, reps: 100 }
-        ]
+        totalSessions: user.stats.totalWorkouts,
+        totalReps: user.stats.totalReps,
+        averageFormAccuracy: user.stats.averageFormAccuracy,
+        exerciseBreakdown: exerciseBreakdownArray
       }
     };
   },
@@ -293,6 +343,7 @@ export const mockUserAPI = {
   getStats: async () => {
     await delay(400);
     
+    // Return the current user stats (which get updated after each workout)
     return {
       success: true,
       stats: mockUsers[0].stats
