@@ -25,19 +25,22 @@ const AnalyticsScreen: React.FC = () => {
         <div className="analytics-grid">
           {/* Overall Stats */}
           <div className="analytics-card">
-            <h3>Overall Statistics</h3>
+            <h3>📊 Overall Statistics</h3>
             <div className="stats-grid">
               <div className="stat-item">
+                <div className="stat-icon">🏋️</div>
                 <div className="stat-value">
                   {analytics?.totalSessions || 0}
                 </div>
                 <div className="stat-label">Total Workouts</div>
               </div>
               <div className="stat-item">
+                <div className="stat-icon">⚡</div>
                 <div className="stat-value">{analytics?.totalReps || 0}</div>
                 <div className="stat-label">Total Reps</div>
               </div>
               <div className="stat-item">
+                <div className="stat-icon">🎯</div>
                 <div className="stat-value">
                   {analytics?.averageFormAccuracy || 0}%
                 </div>
@@ -48,13 +51,19 @@ const AnalyticsScreen: React.FC = () => {
 
           {/* Exercise Breakdown */}
           <div className="analytics-card">
-            <h3>Exercise Breakdown</h3>
+            <h3>💪 Exercise Breakdown</h3>
             <div className="exercise-list">
               {analytics?.exerciseBreakdown?.map((exercise, index) => (
                 <div key={index} className="exercise-item">
                   <div className="exercise-info">
                     <span className="exercise-name">{exercise.exercise}</span>
                     <span className="exercise-reps">{exercise.reps} reps</span>
+                    <div className="progress-bar-container">
+                      <div 
+                        className="progress-bar" 
+                        style={{ width: `${exercise.formAccuracy}%` }}
+                      ></div>
+                    </div>
                   </div>
                   <div className="exercise-accuracy">
                     {exercise.formAccuracy}%
@@ -66,22 +75,36 @@ const AnalyticsScreen: React.FC = () => {
 
           {/* Recent Workouts */}
           <div className="analytics-card full-width">
-            <h3>Recent Workouts</h3>
+            <h3>📅 Recent Workouts</h3>
             <div className="workout-list">
               {workoutHistory?.slice(0, 5).map((workout, index) => (
                 <div key={index} className="workout-item">
                   <div className="workout-info">
-                    <span className="workout-exercise">{workout.exercise}</span>
-                    <span className="workout-date">
-                      {new Date(workout.startTime).toLocaleDateString()}
-                    </span>
+                    <div className="workout-header">
+                      <span className="workout-exercise">🏋️ {workout.exercise}</span>
+                      <span className="workout-date">
+                        {new Date(workout.startTime).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric'
+                        })}
+                      </span>
+                    </div>
+                    <div className="workout-progress">
+                      <div className="progress-bar-container">
+                        <div 
+                          className="progress-bar" 
+                          style={{ width: `${workout.formAccuracy}%` }}
+                        ></div>
+                      </div>
+                    </div>
                   </div>
                   <div className="workout-stats">
                     <span className="workout-reps">
-                      {workout.totalReps} reps
+                      ⚡ {workout.totalReps} reps
                     </span>
                     <span className="workout-accuracy">
-                      {workout.formAccuracy}%
+                      🎯 {workout.formAccuracy}%
                     </span>
                   </div>
                 </div>
