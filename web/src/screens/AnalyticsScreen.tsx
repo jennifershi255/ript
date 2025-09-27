@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo } from "react";
 import Navigation from "../components/Navigation";
 import { useWorkout } from "../context/WorkoutContext";
-import DotGridBackground from "../components/DotGridBackground";
 import "./AnalyticsScreen.css";
 
+/* ------------------------ Utilities ------------------------ */
 type DayStat = { date: string; count: number; reps: number };
 
 function startOfDayISO(d: Date) {
@@ -41,23 +41,26 @@ const HeatmapCalendar: React.FC<HeatmapProps> = ({ dataByDay, weeks = 26 }) => {
   const level = (c: number) =>
     c === 0 ? 0 : c <= step ? 1 : c <= step * 2 ? 2 : c <= step * 3 ? 3 : 4;
 
+  // weeks -> columns
   const columns: { date: string; count: number }[][] = [];
   for (let w = 0; w < weeks; w++) {
     columns.push(cells.slice(w * 7, w * 7 + 7));
   }
 
+  const dow = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+
   return (
     <div className="heatmap-wrap">
       <div className="heatmap">
         <div className="heatmap-rows">
-          {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d, i) => (
+          {dow.map((d, i) => (
             <div key={i} className="heatmap-rowlabel">
               {d}
             </div>
           ))}
         </div>
 
-        <div className="heatmap-grid" aria-label="Activity calendar">
+        <div className="heatmap-grid" aria-label="activity calendar">
           {columns.map((week, wi) => (
             <div className="heatmap-col" key={wi}>
               {week.map((day, di) => {
@@ -81,13 +84,13 @@ const HeatmapCalendar: React.FC<HeatmapProps> = ({ dataByDay, weeks = 26 }) => {
       </div>
 
       <div className="heatmap-legend">
-        <span className="legend-label">Less</span>
+        <span className="legend-label">less</span>
         <span className="day-cell l0" />
         <span className="day-cell l1" />
         <span className="day-cell l2" />
         <span className="day-cell l3" />
         <span className="day-cell l4" />
-        <span className="legend-label">More</span>
+        <span className="legend-label">more</span>
       </div>
     </div>
   );
@@ -146,36 +149,37 @@ const AnalyticsScreen: React.FC = () => {
 
   return (
     <div className="analytics-screen">
-      <DotGridBackground />
+      {/* no extra bg div—animation is handled by body::before */}
+
       <Navigation />
 
       <div className="analytics-content">
         <header className="analytics-header">
-          <h1>Your Progress</h1>
-          <p>Track your fitness journey with detailed analytics</p>
+          <h1>your progress</h1>
+          <p>track your fitness journey with detailed analytics</p>
         </header>
 
         <section className="overview-split">
           {/* LEFT */}
           <aside className="overview-left">
-            <h3>overall statistics</h3>
+            <h3 className="section-title">overall statistics</h3>
             <div className="stat-stack">
               <div className="stat-item stat-tile">
                 <div className="stat-icon">🏆</div>
                 <div className="stat-main">{fmt(analytics?.totalSessions)}</div>
-                <div className="stat-sub">Total Workouts</div>
+                <div className="stat-sub">total workouts</div>
               </div>
               <div className="stat-item stat-tile">
                 <div className="stat-icon">⚡</div>
                 <div className="stat-main">{fmt(analytics?.totalReps)}</div>
-                <div className="stat-sub">Total Reps</div>
+                <div className="stat-sub">total reps</div>
               </div>
               <div className="stat-item stat-tile">
                 <div className="stat-icon">🎯</div>
                 <div className="stat-main">
                   {Math.round(analytics?.averageFormAccuracy ?? 0)}%
                 </div>
-                <div className="stat-sub">Average Form</div>
+                <div className="stat-sub">average form</div>
               </div>
             </div>
           </aside>
@@ -191,7 +195,7 @@ const AnalyticsScreen: React.FC = () => {
                 <div className="streak-icon">🔥</div>
                 <div className="streak-meta">
                   <div className="streak-value">{currentStreak} days</div>
-                  <div className="streak-label">Current Streak</div>
+                  <div className="streak-label">current streak</div>
                 </div>
               </div>
 
@@ -199,7 +203,7 @@ const AnalyticsScreen: React.FC = () => {
                 <div className="streak-icon">🏆</div>
                 <div className="streak-meta">
                   <div className="streak-value">{longestStreak} days</div>
-                  <div className="streak-label">Longest Streak</div>
+                  <div className="streak-label">longest streak</div>
                 </div>
               </div>
             </div>
@@ -208,34 +212,50 @@ const AnalyticsScreen: React.FC = () => {
 
         {/* Recent Workouts */}
         <article className="analytics-card recent">
-          <h3>Recent Workouts</h3>
-          <div className="workout-list">
-            {workoutHistory?.length ? (
-              workoutHistory.slice(0, 5).map((w: any, i: number) => (
-                <div key={w.startTime + i} className="workout-item">
-                  <div className="workout-info">
-                    <span className="workout-exercise">🏋️ {w.exercise}</span>
-                    <time className="workout-date">
-                      {new Date(w.startTime).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
-                    </time>
-                  </div>
-                  <div className="workout-stats">
-                    <span className="workout-reps">⚡ {fmt(w.totalReps)} reps</span>
-                    <span className="workout-accuracy">
-                      🎯 {Math.round(w.formAccuracy ?? 0)}%
-                    </span>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p className="no-data">No workout history available yet</p>
-            )}
+  <h3 className="recent-title">recent workouts</h3>
+
+  <div className="workout-list">
+    {workoutHistory?.length ? (
+      workoutHistory.slice(0, 5).map((w: any, i: number) => {
+        const dateStr = new Date(w.startTime).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        });
+
+        return (
+          <div key={w.startTime + i} className="workout-row">
+            {/* 1) Exercise */}
+            <div className="cell cell--exercise">
+              <span className="emoji" aria-hidden>🏋️</span>
+              <span className="exercise">{w.exercise}</span>
+            </div>
+
+            {/* 2) Date */}
+            <div className="cell cell--date">
+              <time>{dateStr}</time>
+            </div>
+
+            {/* 3) Reps */}
+            <div className="cell cell--reps">
+              <span className="value">{fmt(w.totalReps)}</span>
+              <span className="unit">reps</span>
+            </div>
+
+            {/* 4) Accuracy */}
+            <div className="cell cell--accuracy">
+              <span className="value">{Math.round(w.formAccuracy ?? 0)}</span>
+              <span className="unit">%</span>
+            </div>
           </div>
-        </article>
+        );
+      })
+    ) : (
+      <p className="no-data">no workout history yet</p>
+    )}
+  </div>
+</article>
+
       </div>
     </div>
   );
