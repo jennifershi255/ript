@@ -43,8 +43,15 @@ class PoseDetector {
 
   // Generate mock pose data for development/testing
   generateMockPoseData() {
-    // Simulate realistic pose keypoints with some variation
-    const baseKeypoints = {
+    // Create a cycling squat animation
+    if (!this.animationTime) this.animationTime = 0;
+    this.animationTime += 0.1;
+    
+    // Create a sine wave for squat motion (0 = standing, 1 = full squat)
+    const squatProgress = (Math.sin(this.animationTime) + 1) / 2; // 0 to 1
+    
+    // Base standing position
+    const standingKeypoints = {
       nose: { x: 320, y: 100, z: 0, visibility: 0.9 },
       left_eye: { x: 310, y: 90, z: 0, visibility: 0.8 },
       right_eye: { x: 330, y: 90, z: 0, visibility: 0.8 },
@@ -63,24 +70,41 @@ class PoseDetector {
       left_ankle: { x: 280, y: 480, z: 0, visibility: 0.8 },
       right_ankle: { x: 360, y: 480, z: 0, visibility: 0.8 }
     };
-
-    // Add some random variation to simulate movement
-    const variation = 20;
-    const keypoints = {};
     
-    Object.entries(baseKeypoints).forEach(([name, point]) => {
-      keypoints[name] = {
-        x: point.x + (Math.random() - 0.5) * variation,
-        y: point.y + (Math.random() - 0.5) * variation,
-        z: point.z + (Math.random() - 0.5) * 5,
-        visibility: Math.max(0.5, point.visibility + (Math.random() - 0.5) * 0.2)
-      };
+    // Animate squat movement
+    const keypoints = {};
+    Object.entries(standingKeypoints).forEach(([name, point]) => {
+      let animatedPoint = { ...point };
+      
+      // Animate squat-specific joints
+      if (name.includes('hip')) {
+        // Hips move down and slightly back during squat
+        animatedPoint.y = point.y + squatProgress * 60; // Move down
+        animatedPoint.x = point.x - squatProgress * 20; // Move slightly back
+      } else if (name.includes('knee')) {
+        // Knees bend forward and down
+        animatedPoint.y = point.y + squatProgress * 40; // Move down less than hips
+        animatedPoint.x = point.x + squatProgress * 30; // Move forward
+      } else if (name.includes('ankle')) {
+        // Ankles stay relatively stable
+        animatedPoint.y = point.y + squatProgress * 10; // Slight movement
+      } else if (name.includes('shoulder')) {
+        // Shoulders move down with the body
+        animatedPoint.y = point.y + squatProgress * 40;
+      }
+      
+      // Add small random variation
+      animatedPoint.x += (Math.random() - 0.5) * 5;
+      animatedPoint.y += (Math.random() - 0.5) * 5;
+      
+      keypoints[name] = animatedPoint;
     });
 
     return {
       keypoints,
       timestamp: Date.now(),
-      confidence: 0.8 + Math.random() * 0.2
+      confidence: 0.8 + Math.random() * 0.2,
+      squatProgress // For debugging
     };
   }
 

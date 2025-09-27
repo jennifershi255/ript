@@ -10,11 +10,11 @@ import {
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 // TensorFlow imports removed for now - will be added back when implementing real pose detection
-import Svg, { Circle, Line, Text as SvgText } from 'react-native-svg';
+import Svg, { Circle, Line, Text as SvgText, Polygon } from 'react-native-svg';
 
 import { useWorkout } from '../context/WorkoutContext';
 import { analysisAPI } from '../services/api';
-import PoseDetector from '../services/PoseDetector';
+import RealPoseDetector from '../services/RealPoseDetector';
 
 const { width, height } = Dimensions.get('window');
 
@@ -42,6 +42,8 @@ export default function CameraScreen({ route, navigation }) {
   const [squatState, setSquatState] = useState('standing'); // 'standing', 'descending', 'bottom', 'ascending'
   const [lastKneeAngle, setLastKneeAngle] = useState(null);
   const [repInProgress, setRepInProgress] = useState(false);
+  const [detectionStatus, setDetectionStatus] = useState('initializing'); // 'initializing', 'mediapipe', 'tensorflow', 'mock'
+  const [poseSource, setPoseSource] = useState('unknown');
   
   const cameraRef = useRef(null);
   const poseDetector = useRef(null);
@@ -72,11 +74,22 @@ export default function CameraScreen({ route, navigation }) {
 
   const initializePoseDetector = async () => {
     try {
-      poseDetector.current = new PoseDetector();
+      setDetectionStatus('initializing');
+      poseDetector.current = new RealPoseDetector();
       await poseDetector.current.initialize();
+      
+      // Determine which detection method is being used
+      if (poseDetector.current.useWebViewDetection) {
+        setDetectionStatus('webview');
+      } else {
+        setDetectionStatus('mock');
+      }
+      
+      console.log('Pose detector initialized with status:', detectionStatus);
     } catch (error) {
       console.error('Failed to initialize pose detector:', error);
-      Alert.alert('Error', 'Failed to initialize pose detection');
+      setDetectionStatus('mock');
+      Alert.alert('Pose Detection', 'Using enhanced simulation mode for pose tracking');
     }
   };
 
@@ -108,80 +121,101 @@ export default function CameraScreen({ route, navigation }) {
     return angle;
   };
 
-  // Detect squat phases based on knee angle and hip position
-  const detectSquatPhase = (keypoints) => {
-    if (!keypoints) return null;
+  // Detect squat phases using GitHub repo methodology
+  const detectSquatPhase = (poseData) => {
+    if (!poseData || !poseData.keypoints) return null;
 
-    // Check if required keypoints exist and have good visibility
-    const requiredPoints = ['left_hip', 'left_knee', 'left_ankle', 'right_hip', 'right_knee', 'right_ankle'];
-    const missingPoints = requiredPoints.filter(point => !keypoints[point] || keypoints[point].visibility < 0.5);
-    
-    if (missingPoints.length > 0) {
-      console.log('Missing or low confidence keypoints:', missingPoints);
+    // Validate pose quality first
+    const validation = poseDetector.current?.validatePose(poseData);
+    if (!validation?.isValid) {
+      console.log('Invalid pose:', validation?.reason);
       return null;
     }
 
-    const leftHip = keypoints.left_hip;
-    const leftKnee = keypoints.left_knee;
-    const leftAnkle = keypoints.left_ankle;
-    const rightHip = keypoints.right_hip;
-    const rightKnee = keypoints.right_knee;
-    const rightAnkle = keypoints.right_ankle;
+    // Extract angles using the GitHub repo method
+    const angles = poseDetector.current?.extractSquatAngles(poseData.keypoints);
+    if (!angles || !angles.avg_knee_angle) return null;
 
-    // Calculate knee angles
-    const leftKneeAngle = calculateAngle(leftHip, leftKnee, leftAnkle);
-    const rightKneeAngle = calculateAngle(rightHip, rightKnee, rightAnkle);
+    const kneeAngle = angles.avg_knee_angle;
+    const hipAngle = angles.avg_hip_angle;
     
-    if (!leftKneeAngle || !rightKneeAngle) return null;
-
-    const avgKneeAngle = (leftKneeAngle + rightKneeAngle) / 2;
+    console.log(`Squat Analysis - Knee: ${kneeAngle?.toFixed(1)}°, Hip: ${hipAngle?.toFixed(1)}°, State: ${squatState}`);
     
-    // Debug logging
-    console.log(`Knee angles - Left: ${leftKneeAngle?.toFixed(1)}°, Right: ${rightKneeAngle?.toFixed(1)}°, Avg: ${avgKneeAngle?.toFixed(1)}°, Current state: ${squatState}`);
-    
-    // Squat phase detection logic
+    // Squat phase detection based on biomechanics from GitHub repo
     let newPhase = 'standing';
     let newState = squatState;
     let shouldIncrementRep = false;
 
-    if (avgKneeAngle > 150) {
-      // Standing position
+    // Thresholds based on squat biomechanics research
+    const STANDING_KNEE_ANGLE = 160;  // Nearly straight legs
+    const SQUAT_TRANSITION_ANGLE = 120; // Transition zone
+    const DEEP_SQUAT_ANGLE = 90;      // Good squat depth
+
+    if (kneeAngle >= STANDING_KNEE_ANGLE) {
+      // Standing position - legs nearly straight
       if (squatState === 'ascending' && repInProgress) {
         // Completed a full rep
         shouldIncrementRep = true;
         setRepInProgress(false);
         newPhase = 'completed';
-        console.log('Rep completed! Knee angle:', avgKneeAngle);
+        console.log('✅ Rep completed! Knee angle:', kneeAngle);
       } else {
         newPhase = 'standing';
       }
       newState = 'standing';
-    } else if (avgKneeAngle > 100 && avgKneeAngle <= 150) {
-      // Descending or ascending
+    } else if (kneeAngle > SQUAT_TRANSITION_ANGLE && kneeAngle < STANDING_KNEE_ANGLE) {
+      // Transition zone - descending or ascending
       if (squatState === 'standing') {
         newState = 'descending';
         newPhase = 'descending';
         setRepInProgress(true);
-        console.log('Starting squat descent, knee angle:', avgKneeAngle);
+        console.log('⬇️ Starting squat descent, knee angle:', kneeAngle);
       } else if (squatState === 'bottom') {
         newState = 'ascending';
         newPhase = 'ascending';
-        console.log('Ascending from squat, knee angle:', avgKneeAngle);
+        console.log('⬆️ Ascending from squat, knee angle:', kneeAngle);
       }
-    } else if (avgKneeAngle <= 100) {
-      // Bottom position
+    } else if (kneeAngle <= SQUAT_TRANSITION_ANGLE) {
+      // Bottom position - good squat depth
       newState = 'bottom';
       newPhase = 'bottom';
-      console.log('At squat bottom, knee angle:', avgKneeAngle);
+      console.log('🔽 At squat bottom, knee angle:', kneeAngle);
     }
 
     setSquatState(newState);
-    setLastKneeAngle(avgKneeAngle);
+    setLastKneeAngle(kneeAngle);
+    
+    // Calculate form score based on angles (from GitHub repo methodology)
+    let formScore = 100;
+    
+    if (kneeAngle < DEEP_SQUAT_ANGLE) {
+      // Excellent depth
+      formScore = 95;
+    } else if (kneeAngle < SQUAT_TRANSITION_ANGLE) {
+      // Good depth
+      formScore = 85;
+    } else if (kneeAngle < 140) {
+      // Moderate depth
+      formScore = 70;
+    } else {
+      // Poor depth or standing
+      formScore = kneeAngle >= STANDING_KNEE_ANGLE ? 100 : 60;
+    }
+    
+    // Adjust for hip angle if available
+    if (hipAngle) {
+      if (hipAngle < 90 || hipAngle > 120) {
+        formScore -= 10; // Penalize poor hip position
+      }
+    }
     
     return {
       phase: newPhase,
-      kneeAngle: avgKneeAngle,
-      shouldIncrementRep
+      kneeAngle: kneeAngle,
+      hipAngle: hipAngle,
+      formScore: Math.max(50, Math.min(100, formScore)),
+      shouldIncrementRep,
+      angles: angles
     };
   };
 
@@ -219,44 +253,51 @@ export default function CameraScreen({ route, navigation }) {
         skipProcessing: true
       });
 
-      // Detect pose using MediaPipe
+      // Detect pose using the real pose detector
       const poseData = await poseDetector.current.detectPose(photo.uri);
       
       if (poseData && poseData.keypoints) {
         setCurrentPose(poseData);
+        setPoseSource(poseData.source || 'unknown');
 
-        // Debug: Log available keypoints
-        console.log('Available keypoints:', Object.keys(poseData.keypoints));
-
-        // Detect squat phase locally
-        const squatAnalysis = detectSquatPhase(poseData.keypoints);
+        // Detect squat phase using real pose analysis
+        const squatAnalysis = detectSquatPhase(poseData);
         
         if (squatAnalysis) {
           setRepPhase(squatAnalysis.phase);
           
-          // Update form score based on knee angle and posture
-          let calculatedFormScore = 100;
-          if (squatAnalysis.kneeAngle < 90) {
-            calculatedFormScore = Math.max(60, 100 - (90 - squatAnalysis.kneeAngle) * 2);
-          } else if (squatAnalysis.kneeAngle > 170) {
-            calculatedFormScore = Math.max(70, 100 - (squatAnalysis.kneeAngle - 170) * 3);
+          // Use calculated form score from analysis
+          setFormScore(Math.round(squatAnalysis.formScore));
+          
+          // Generate feedback based on GitHub repo methodology
+          const feedbackMessages = [];
+          const { kneeAngle, hipAngle, phase } = squatAnalysis;
+          
+          if (phase === 'descending') {
+            if (kneeAngle > 140) {
+              feedbackMessages.push("Go deeper! Squat lower for better results.");
+            } else {
+              feedbackMessages.push("Good descent! Keep going down.");
+            }
+          } else if (phase === 'bottom') {
+            if (kneeAngle < 90) {
+              feedbackMessages.push("Excellent depth! Perfect squat form.");
+            } else if (kneeAngle < 120) {
+              feedbackMessages.push("Good depth! Now push up through your heels.");
+            } else {
+              feedbackMessages.push("Try to go deeper for better muscle activation.");
+            }
+          } else if (phase === 'ascending') {
+            feedbackMessages.push("Drive up! Push through your heels.");
+          } else if (phase === 'completed') {
+            feedbackMessages.push("Great rep! Keep the momentum going.");
+          } else {
+            feedbackMessages.push("Ready to squat! Maintain good posture.");
           }
           
-          // Round form score to whole number
-          setFormScore(Math.round(calculatedFormScore));
-          
-          // Generate feedback based on form
-          const feedbackMessages = [];
-          if (squatAnalysis.kneeAngle < 80) {
-            feedbackMessages.push("Great depth! Perfect squat.");
-          } else if (squatAnalysis.kneeAngle > 160) {
-            feedbackMessages.push("Good form! Keep it up.");
-          } else if (squatAnalysis.phase === 'bottom') {
-            feedbackMessages.push("Perfect depth! Now push up.");
-          } else if (squatAnalysis.phase === 'ascending') {
-            feedbackMessages.push("Drive through your heels!");
-          } else if (squatAnalysis.phase === 'descending') {
-            feedbackMessages.push("Keep going down!");
+          // Add hip angle feedback if available
+          if (hipAngle && (hipAngle < 90 || hipAngle > 120)) {
+            feedbackMessages.push("Keep your back straight and chest up.");
           }
           
           setFeedback(feedbackMessages);
@@ -266,20 +307,20 @@ export default function CameraScreen({ route, navigation }) {
             incrementRepCount();
           }
 
-          // Add data to workout context
+          // Add data to workout context with all angles
           await addPoseData({
             keypoints: poseData.keypoints,
-            angles: { kneeAngle: squatAnalysis.kneeAngle },
+            angles: squatAnalysis.angles,
             repNumber: repCount,
             phase: squatAnalysis.phase
           });
 
-          // Add feedback if there are corrections
+          // Add feedback
           if (feedbackMessages.length > 0) {
             await addFeedback({
               repNumber: repCount,
               messages: feedbackMessages,
-              formScore: calculatedFormScore,
+              formScore: squatAnalysis.formScore,
               timestamp: new Date().toISOString()
             });
           }
@@ -340,6 +381,157 @@ export default function CameraScreen({ route, navigation }) {
     }
   };
 
+  const renderHumanSilhouette = (keypoints, scaleX, scaleY) => {
+    // Check if we have enough keypoints for a silhouette
+    const requiredPoints = ['left_shoulder', 'right_shoulder', 'left_hip', 'right_hip', 'left_knee', 'right_knee', 'left_ankle', 'right_ankle'];
+    const availablePoints = requiredPoints.filter(name => keypoints[name] && keypoints[name].visibility > 0.4);
+    
+    if (availablePoints.length < 6) return null;
+
+    // Get silhouette color based on form
+    const silhouetteColor = formScore > 80 ? '#00ff0040' : formScore > 60 ? '#ffff0040' : '#ff450040';
+    
+    // Create body parts as filled shapes
+    const bodyParts = [];
+    
+    // Torso (shoulders to hips)
+    if (keypoints.left_shoulder && keypoints.right_shoulder && keypoints.left_hip && keypoints.right_hip) {
+      const torsoPoints = [
+        `${keypoints.left_shoulder.x * scaleX},${keypoints.left_shoulder.y * scaleY}`,
+        `${keypoints.right_shoulder.x * scaleX},${keypoints.right_shoulder.y * scaleY}`,
+        `${keypoints.right_hip.x * scaleX},${keypoints.right_hip.y * scaleY}`,
+        `${keypoints.left_hip.x * scaleX},${keypoints.left_hip.y * scaleY}`
+      ].join(' ');
+      
+      bodyParts.push(
+        <Polygon
+          key="torso"
+          points={torsoPoints}
+          fill={silhouetteColor}
+          stroke={formScore > 70 ? '#00ff00' : '#ff4500'}
+          strokeWidth="2"
+          opacity="0.7"
+        />
+      );
+    }
+    
+    // Left leg (hip to ankle)
+    if (keypoints.left_hip && keypoints.left_knee && keypoints.left_ankle) {
+      const legWidth = 15;
+      const hipX = keypoints.left_hip.x * scaleX;
+      const hipY = keypoints.left_hip.y * scaleY;
+      const kneeX = keypoints.left_knee.x * scaleX;
+      const kneeY = keypoints.left_knee.y * scaleY;
+      const ankleX = keypoints.left_ankle.x * scaleX;
+      const ankleY = keypoints.left_ankle.y * scaleY;
+      
+      // Thigh
+      const thighPoints = [
+        `${hipX - legWidth},${hipY}`,
+        `${hipX + legWidth},${hipY}`,
+        `${kneeX + legWidth},${kneeY}`,
+        `${kneeX - legWidth},${kneeY}`
+      ].join(' ');
+      
+      bodyParts.push(
+        <Polygon
+          key="left-thigh"
+          points={thighPoints}
+          fill={silhouetteColor}
+          stroke={getJointColor('left_knee', keypoints.left_knee.visibility)}
+          strokeWidth="2"
+          opacity="0.7"
+        />
+      );
+      
+      // Shin
+      const shinPoints = [
+        `${kneeX - legWidth},${kneeY}`,
+        `${kneeX + legWidth},${kneeY}`,
+        `${ankleX + legWidth},${ankleY}`,
+        `${ankleX - legWidth},${ankleY}`
+      ].join(' ');
+      
+      bodyParts.push(
+        <Polygon
+          key="left-shin"
+          points={shinPoints}
+          fill={silhouetteColor}
+          stroke={getJointColor('left_ankle', keypoints.left_ankle.visibility)}
+          strokeWidth="2"
+          opacity="0.7"
+        />
+      );
+    }
+    
+    // Right leg (hip to ankle)
+    if (keypoints.right_hip && keypoints.right_knee && keypoints.right_ankle) {
+      const legWidth = 15;
+      const hipX = keypoints.right_hip.x * scaleX;
+      const hipY = keypoints.right_hip.y * scaleY;
+      const kneeX = keypoints.right_knee.x * scaleX;
+      const kneeY = keypoints.right_knee.y * scaleY;
+      const ankleX = keypoints.right_ankle.x * scaleX;
+      const ankleY = keypoints.right_ankle.y * scaleY;
+      
+      // Thigh
+      const thighPoints = [
+        `${hipX - legWidth},${hipY}`,
+        `${hipX + legWidth},${hipY}`,
+        `${kneeX + legWidth},${kneeY}`,
+        `${kneeX - legWidth},${kneeY}`
+      ].join(' ');
+      
+      bodyParts.push(
+        <Polygon
+          key="right-thigh"
+          points={thighPoints}
+          fill={silhouetteColor}
+          stroke={getJointColor('right_knee', keypoints.right_knee.visibility)}
+          strokeWidth="2"
+          opacity="0.7"
+        />
+      );
+      
+      // Shin
+      const shinPoints = [
+        `${kneeX - legWidth},${kneeY}`,
+        `${kneeX + legWidth},${kneeY}`,
+        `${ankleX + legWidth},${ankleY}`,
+        `${ankleX - legWidth},${ankleY}`
+      ].join(' ');
+      
+      bodyParts.push(
+        <Polygon
+          key="right-shin"
+          points={shinPoints}
+          fill={silhouetteColor}
+          stroke={getJointColor('right_ankle', keypoints.right_ankle.visibility)}
+          strokeWidth="2"
+          opacity="0.7"
+        />
+      );
+    }
+    
+    // Head (if available)
+    if (keypoints.nose) {
+      bodyParts.push(
+        <Circle
+          key="head"
+          cx={keypoints.nose.x * scaleX}
+          cy={keypoints.nose.y * scaleY}
+          r="25"
+          fill={silhouetteColor}
+          stroke="#ffffff"
+          strokeWidth="2"
+          opacity="0.6"
+        />
+      );
+    }
+    
+    return bodyParts;
+  };
+
   const renderPoseOverlay = () => {
     if (!currentPose || !currentPose.keypoints) return null;
 
@@ -349,30 +541,32 @@ export default function CameraScreen({ route, navigation }) {
 
     return (
       <Svg style={StyleSheet.absoluteFillObject} width={width} height={height}>
-        {/* Draw pose skeleton */}
+        {/* Draw human silhouette */}
+        {renderHumanSilhouette(keypoints, scaleX, scaleY)}
+        
+        {/* Draw arm connections */}
+        {renderArmConnections(keypoints, scaleX, scaleY)}
+        
+        {/* Draw key joints */}
         {Object.entries(keypoints).map(([name, point], index) => {
-          if (point.visibility > 0.3) {
+          if (point.visibility > 0.5 && ['left_knee', 'right_knee', 'left_hip', 'right_hip'].includes(name)) {
             const jointColor = getJointColor(name, point.visibility);
-            const radius = point.visibility > 0.7 ? 6 : 4;
             
             return (
               <Circle
                 key={index}
                 cx={point.x * scaleX}
                 cy={point.y * scaleY}
-                r={radius}
+                r="8"
                 fill={jointColor}
                 stroke="#ffffff"
-                strokeWidth="1"
-                opacity={Math.max(0.7, point.visibility)}
+                strokeWidth="2"
+                opacity="0.9"
               />
             );
           }
           return null;
         })}
-
-        {/* Draw connections between keypoints */}
-        {renderPoseConnections(keypoints, scaleX, scaleY)}
         
         {/* Add form quality indicator */}
         {formScore && (
@@ -385,69 +579,70 @@ export default function CameraScreen({ route, navigation }) {
           />
         )}
         
-        {/* Add knee angle indicator */}
+        {/* Add angle indicators */}
         {lastKneeAngle && (
-          <SvgText
-            x={width - 60}
-            y={160}
-            fontSize="12"
-            fill="#ffffff"
-            textAnchor="middle"
-            fontWeight="bold"
-          >
-            {Math.round(lastKneeAngle)}°
-          </SvgText>
+          <>
+            <SvgText
+              x={width - 60}
+              y={160}
+              fontSize="12"
+              fill="#ffffff"
+              textAnchor="middle"
+              fontWeight="bold"
+            >
+              Knee: {Math.round(lastKneeAngle)}°
+            </SvgText>
+            
+            {/* Add angle quality indicator */}
+            <Circle
+              cx={width - 60}
+              cy={180}
+              r="8"
+              fill={lastKneeAngle < 90 ? '#00ff00' : lastKneeAngle < 120 ? '#ffff00' : '#ff4500'}
+              opacity="0.8"
+            />
+          </>
         )}
+        
+        {/* Add rep phase indicator */}
+        <SvgText
+          x={20}
+          y={50}
+          fontSize="16"
+          fill="#ffffff"
+          fontWeight="bold"
+        >
+          Phase: {repPhase}
+        </SvgText>
+        
+        {/* Add camera orientation guide */}
+        <SvgText
+          x={20}
+          y={height - 100}
+          fontSize="14"
+          fill="#ffffff"
+          fontWeight="bold"
+        >
+          💡 Turn sideways for best results
+        </SvgText>
       </Svg>
     );
   };
 
-  const getConnectionColor = (start, end) => {
-    const legConnections = [
-      'left_hip-left_knee', 'left_knee-left_ankle', 
-      'right_hip-right_knee', 'right_knee-right_ankle'
-    ];
-    const torsoConnections = [
-      'left_shoulder-right_shoulder', 'left_hip-right_hip',
-      'left_shoulder-left_hip', 'right_shoulder-right_hip'
-    ];
-    
-    const connectionKey = `${start}-${end}`;
-    
-    if (legConnections.includes(connectionKey)) {
-      return formScore > 80 ? '#00ff00' : formScore > 60 ? '#ffff00' : '#ff4500';
-    } else if (torsoConnections.includes(connectionKey)) {
-      return formScore > 70 ? '#00bfff' : '#4169e1';
-    } else {
-      return '#9370db';
-    }
-  };
-
-  const renderPoseConnections = (keypoints, scaleX, scaleY) => {
-    const connections = [
-      ['left_shoulder', 'right_shoulder'],
+  // Simplified connection rendering for arms only (since legs are now silhouettes)
+  const renderArmConnections = (keypoints, scaleX, scaleY) => {
+    const armConnections = [
       ['left_shoulder', 'left_elbow'],
       ['left_elbow', 'left_wrist'],
       ['right_shoulder', 'right_elbow'],
-      ['right_elbow', 'right_wrist'],
-      ['left_shoulder', 'left_hip'],
-      ['right_shoulder', 'right_hip'],
-      ['left_hip', 'right_hip'],
-      ['left_hip', 'left_knee'],
-      ['left_knee', 'left_ankle'],
-      ['right_hip', 'right_knee'],
-      ['right_knee', 'right_ankle']
+      ['right_elbow', 'right_wrist']
     ];
 
-    return connections.map(([start, end], index) => {
+    return armConnections.map(([start, end], index) => {
       const startPoint = keypoints[start];
       const endPoint = keypoints[end];
       
       if (startPoint && endPoint && startPoint.visibility > 0.4 && endPoint.visibility > 0.4) {
-        const connectionColor = getConnectionColor(start, end);
-        const strokeWidth = ['left_hip', 'right_hip', 'left_knee', 'right_knee'].includes(start) || 
-                           ['left_hip', 'right_hip', 'left_knee', 'right_knee'].includes(end) ? 3 : 2;
-        
         return (
           <Line
             key={index}
@@ -455,9 +650,9 @@ export default function CameraScreen({ route, navigation }) {
             y1={startPoint.y * scaleY}
             x2={endPoint.x * scaleX}
             y2={endPoint.y * scaleY}
-            stroke={connectionColor}
-            strokeWidth={strokeWidth}
-            opacity="0.8"
+            stroke="#00bfff"
+            strokeWidth="3"
+            opacity="0.7"
           />
         );
       }
@@ -498,10 +693,19 @@ export default function CameraScreen({ route, navigation }) {
           <View style={styles.exerciseInfo}>
             <Text style={styles.exerciseTitle}>{exercise.toUpperCase()}</Text>
             <Text style={styles.repCount}>Rep: {repCount}</Text>
+            <View style={styles.detectionStatus}>
+              <Text style={[styles.statusText, { 
+                color: detectionStatus === 'webview' ? '#00ff00' : 
+                       detectionStatus === 'mock' ? '#ffaa00' : '#666666' 
+              }]}>
+                {detectionStatus === 'webview' ? '🌐 WebView' :
+                 detectionStatus === 'mock' ? '🎭 Smart Sim' : '⏳ Loading...'}
+              </Text>
+            </View>
           </View>
           
           <View style={styles.formScore}>
-                <Text style={styles.formScoreText}>{Math.round(formScore)}%</Text>
+            <Text style={styles.formScoreText}>{Math.round(formScore)}%</Text>
             <Text style={styles.formScoreLabel}>Form</Text>
           </View>
         </View>
@@ -590,6 +794,17 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 14,
     marginTop: 2,
+  },
+  detectionStatus: {
+    marginTop: 5,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    borderRadius: 8,
+  },
+  statusText: {
+    fontSize: 10,
+    fontWeight: '600',
   },
   formScore: {
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
