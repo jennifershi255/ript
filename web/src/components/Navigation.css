@@ -17,6 +17,11 @@
   text-decoration: none;
 }
 
+.brand-logo {
+  height: 30px;
+  width: auto;
+}
+
 .nav-links {
   display: flex;
   gap: 2rem;

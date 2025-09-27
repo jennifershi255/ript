@@ -20,9 +20,8 @@ const Navigation: React.FC = () => {
   return (
     <nav className="navigation">
       <div className="nav-brand">
-        <Link to="/" className="brand-link">
-          🏋️‍♀️ AI Workout Coach
-        </Link>
+      <img src={require("./logo.png")} alt="Ript" className="brand-logo" />
+
       </div>
 
       <div className="nav-links">
