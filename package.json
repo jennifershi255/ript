@@ -1,15 +1,17 @@
 {
   "name": "ai-workout-coach",
   "version": "1.0.0",
-  "description": "AI-powered fitness app that analyzes workout form in real-time",
+  "description": "AI-powered fitness web app that analyzes workout form in real-time",
   "main": "index.js",
   "scripts": {
-    "dev": "concurrently \"npm run backend\" \"npm run frontend\"",
+    "dev": "concurrently \"npm run backend\" \"npm run web\"",
     "backend": "cd backend && npm run dev",
-    "frontend": "cd frontend && npm start",
-    "install-all": "npm install && cd backend && npm install && cd ../frontend && npm install"
+    "web": "cd web && npm start",
+    "install-all": "npm install && cd backend && npm install && cd ../web && npm install",
+    "build": "cd web && npm run build",
+    "start": "cd backend && npm start"
   },
-  "keywords": ["ai", "fitness", "computer-vision", "react-native", "mongodb"],
+  "keywords": ["ai", "fitness", "computer-vision", "react", "web", "mongodb"],
   "author": "TechNova Team",
   "license": "MIT",
   "devDependencies": {

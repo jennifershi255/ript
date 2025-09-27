@@ -1,0 +1,398 @@
+.workout-screen {
+  min-height: 100vh;
+  background: #f8f9fa;
+}
+
+.workout-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.workout-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.workout-header h1 {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #2c3e50;
+  margin: 0 0 0.5rem;
+}
+
+.workout-header p {
+  color: #7f8c8d;
+  margin: 0;
+}
+
+.workout-placeholder {
+  display: grid;
+  grid-template-columns: 3fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  height: calc(100vh - 200px);
+}
+
+.camera-placeholder {
+  background: white;
+  border-radius: 15px;
+  padding: 1rem;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  height: 100%;
+  min-height: 600px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.camera-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.camera-placeholder h3 {
+  color: #2c3e50;
+  margin: 0 0 1rem;
+}
+
+.camera-placeholder p {
+  color: #7f8c8d;
+  max-width: 300px;
+}
+
+.video-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.camera-video {
+  width: 100%;
+  height: 100%;
+  max-height: calc(100vh - 250px);
+  min-height: 600px;
+  object-fit: cover;
+  border-radius: 15px;
+  background: #000;
+  display: block;
+  /* Remove mirroring - show natural camera view */
+  transform: scaleX(1);
+}
+
+.pose-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  max-height: calc(100vh - 250px);
+  min-height: 600px;
+  border-radius: 15px;
+  pointer-events: none;
+  z-index: 2;
+  transition: opacity 0.3s ease;
+}
+
+.pose-overlay.visible {
+  opacity: 1;
+  display: block;
+}
+
+.pose-overlay.hidden {
+  opacity: 0;
+  display: none;
+}
+
+/* Debug styles */
+.pose-overlay {
+  border: 2px solid rgba(0, 255, 0, 0.3);
+  background: rgba(0, 0, 0, 0.1);
+}
+
+/* Fullscreen video styling */
+.camera-video:fullscreen,
+.camera-video:-webkit-full-screen,
+.camera-video:-moz-full-screen {
+  width: 100vw;
+  height: 100vh;
+  max-height: none;
+  border-radius: 0;
+  object-fit: contain;
+  background: #000;
+  transform: scaleX(1);
+}
+
+.camera-controls {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  z-index: 10;
+}
+
+.fullscreen-button,
+.overlay-toggle-button {
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.fullscreen-button:hover,
+.overlay-toggle-button:hover {
+  background: rgba(0, 0, 0, 0.9);
+  transform: scale(1.1);
+}
+
+.fullscreen-button:active,
+.overlay-toggle-button:active {
+  transform: scale(0.95);
+}
+
+.recording-indicator {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.recording-dot {
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+.feedback-panel {
+  background: white;
+  border-radius: 15px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  height: fit-content;
+  margin-bottom: 1rem;
+}
+
+.feedback-panel h3 {
+  color: #2c3e50;
+  margin: 0 0 1.5rem;
+  text-align: center;
+}
+
+.feedback-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.feedback-icon {
+  font-size: 1.2rem;
+}
+
+.workout-stats {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+.stat-box {
+  background: white;
+  border-radius: 15px;
+  padding: 1rem;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.stat-number {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #3498db;
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  color: #7f8c8d;
+  font-size: 0.9rem;
+}
+
+.workout-controls {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.control-button {
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.control-button.primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.control-button.secondary {
+  background: white;
+  color: #e74c3c;
+  border: 2px solid #e74c3c;
+}
+
+.control-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 768px) {
+  .workout-content {
+    padding: 1rem;
+  }
+  
+  .workout-placeholder {
+    grid-template-columns: 1fr;
+    height: calc(100vh - 150px);
+  }
+  
+  .camera-placeholder {
+    min-height: calc(100vh - 300px);
+  }
+  
+  .camera-video {
+    max-height: calc(100vh - 300px);
+    min-height: calc(100vh - 300px);
+  }
+  
+  .pose-overlay {
+    max-height: calc(100vh - 300px);
+    min-height: calc(100vh - 300px);
+  }
+  
+  .workout-stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .workout-controls {
+    flex-direction: column;
+  }
+}
+
+/* Analysis Panel Styles */
+.analysis-phase {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  background: rgba(52, 152, 219, 0.1);
+  border-radius: 8px;
+}
+
+.phase-label {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.phase-value {
+  font-weight: bold;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.phase-value.starting {
+  background: #95a5a6;
+  color: white;
+}
+
+.phase-value.descending {
+  background: #f39c12;
+  color: white;
+}
+
+.phase-value.bottom {
+  background: #e74c3c;
+  color: white;
+}
+
+.phase-value.ascending {
+  background: #27ae60;
+  color: white;
+}
+
+.phase-value.completed {
+  background: #9b59b6;
+  color: white;
+}
+
+.feedback-messages {
+  margin-bottom: 1rem;
+}
+
+.angle-display {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding: 1rem;
+  background: rgba(236, 240, 241, 0.5);
+  border-radius: 8px;
+}
+
+.angle-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.angle-item span:first-child {
+  color: #7f8c8d;
+  font-weight: 500;
+}
+
+.angle-item span:last-child {
+  font-weight: bold;
+  color: #2c3e50;
+  font-family: 'Courier New', monospace;
+}
+
+.no-analysis {
+  text-align: center;
+  padding: 2rem;
+  color: #7f8c8d;
+}
+
+.no-analysis p {
+  margin: 0;
+  font-style: italic;
+}
