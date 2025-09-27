@@ -30,39 +30,27 @@ const LoginScreen: React.FC = () => {
 
   return (
     <div className="auth-container">
-      <div className="auth-card">
-        <div className="auth-header">
-          <h1>🏋️‍♀️ AI Workout Coach</h1>
-          <h2>Welcome Back</h2>
-          <p>Sign in to continue your fitness journey</p>
-        </div>
-
+      <div className="auth-content">
         <form onSubmit={handleSubmit} className="auth-form">
           {error && <div className="error-message">{error}</div>}
 
-          <div className="form-group">
-            <label htmlFor="email">Email</label>
-            <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              placeholder="Enter your email"
-            />
-          </div>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            placeholder="Email"
+            className="auth-input"
+          />
 
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              placeholder="Enter your password"
-            />
-          </div>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            placeholder="Password"
+            className="auth-input"
+          />
 
           <button type="submit" className="auth-button" disabled={isLoading}>
             {isLoading ? "Signing In..." : "Sign In"}
@@ -70,18 +58,9 @@ const LoginScreen: React.FC = () => {
         </form>
 
         <div className="auth-footer">
-          <p>
-            Don't have an account?{" "}
-            <Link to="/register" className="auth-link">
-              Sign up here
-            </Link>
-          </p>
-        </div>
-
-        <div className="demo-info">
-          <h4>Demo Account</h4>
-          <p>Email: demo@aiworkout.com</p>
-          <p>Password: demo123</p>
+          <Link to="/register" className="auth-link">
+            Create account
+          </Link>
         </div>
       </div>
     </div>
