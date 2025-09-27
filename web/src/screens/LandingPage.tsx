@@ -64,7 +64,7 @@ const LandingPage: React.FC = () => {
                 onClick={() => setShowLogin(true)} 
                 className="sign-in-text"
               >
-                Sign In →
+                sign in →
               </button>
             </div>
           </>
@@ -75,7 +75,7 @@ const LandingPage: React.FC = () => {
                 onClick={() => setShowLogin(false)} 
                 className="back-button"
               >
-                ← Back
+                ← back
               </button>
             </div>
             <form onSubmit={handleSubmit} className="auth-form">
@@ -86,7 +86,7 @@ const LandingPage: React.FC = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                placeholder="Email"
+                placeholder="email"
                 className="auth-input"
               />
 
@@ -95,18 +95,18 @@ const LandingPage: React.FC = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                placeholder="Password"
+                placeholder="password"
                 className="auth-input"
               />
 
               <Link to="/login" className="auth-button">
-                Sign In
+                sign in
               </Link>
             </form>
 
             <div className="auth-footer">
               <Link to="/register" className="auth-link">
-                Create account
+                create account
               </Link>
             </div>
           </>
