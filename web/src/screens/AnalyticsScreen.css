@@ -1,6 +1,6 @@
 .analytics-screen {
   min-height: 100vh;
-  background: #f8f9fa;
+  background: var(--bg-0);
 }
 
 .analytics-content {
@@ -17,12 +17,12 @@
 .analytics-header h1 {
   font-size: 2rem;
   font-weight: bold;
-  color: #2c3e50;
+  color: var(--ink);
   margin: 0 0 0.5rem;
 }
 
 .analytics-header p {
-  color: #7f8c8d;
+  color: var(--ink);
   margin: 0;
 }
 
@@ -33,10 +33,11 @@
 }
 
 .analytics-card {
-  background: white;
-  border-radius: 15px;
+  background: var(--bg-0);
+  border: 1px solid var(--bg-1);
+  border-radius: var(--radius);
   padding: 2rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-lg);
   animation: fadeInUp 0.6s ease-out;
 }
 
@@ -45,7 +46,7 @@
 }
 
 .analytics-card h3 {
-  color: #2c3e50;
+  color: var(--ink);
   margin: 0 0 1.5rem;
   font-size: 1.3rem;
 }
@@ -59,20 +60,20 @@
 .stat-item {
   text-align: center;
   padding: 1rem;
-  background: #f8f9fa;
+  background: var(--bg-1);
   border-radius: 10px;
 }
 
 .stat-value {
   font-size: 2rem;
   font-weight: bold;
-  color: #3498db;
+  color: var(--accent);
   margin-bottom: 0.5rem;
 }
 
 .stat-label {
   font-size: 0.9rem;
-  color: #7f8c8d;
+  color: var(--ink);
 }
 
 .exercise-list,
@@ -88,8 +89,9 @@
   justify-content: space-between;
   align-items: center;
   padding: 1rem;
-  background: #f8f9fa;
+  background: var(--bg-1);
   border-radius: 10px;
+  border: 1px solid rgba(131, 235, 252, 0.1);
 }
 
 .exercise-info,
@@ -102,19 +104,19 @@
 .exercise-name,
 .workout-exercise {
   font-weight: 600;
-  color: #2c3e50;
+  color: var(--ink);
   text-transform: capitalize;
 }
 
 .exercise-reps,
 .workout-date {
   font-size: 0.9rem;
-  color: #7f8c8d;
+  color: var(--ink);
 }
 
 .exercise-accuracy {
   font-weight: bold;
-  color: #27ae60;
+  color: var(--ink);
   font-size: 1.1rem;
 }
 
@@ -126,18 +128,18 @@
 }
 
 .workout-reps {
-  color: #2c3e50;
+  color: var(--ink);
   font-weight: 500;
 }
 
 .workout-accuracy {
-  color: #27ae60;
+  color: var(--ink);
   font-weight: bold;
 }
 
 .no-data {
   text-align: center;
-  color: #7f8c8d;
+  color: var(--ink);
   font-style: italic;
   padding: 2rem;
 }
