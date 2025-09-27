@@ -69,14 +69,24 @@ body, .analytics-screen {
 }
 
 /* Headings */
-.overview-left h3,
-.overview-right h3{
-  margin: 0 0 1.1rem;
-  font-weight:700;
-  font-size: 1.1rem;
-  color: var(--text);
-  text-transform: lowercase;
-  letter-spacing: .02em;
+.overview-left h3 {
+  text-align: center;
+  display: block;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 1rem;   /* 👈 add this */
+}
+
+/* Center the activity header with the heatmap grid */
+.overview-right {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* centers the header with the grid below */
+}
+
+.overview-right h3 {
+  margin-bottom: 1rem;
 }
 
 /* Align activity title with heatmap grid */
