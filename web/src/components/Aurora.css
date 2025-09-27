@@ -6,6 +6,7 @@
 }
 
 .aurora-container {
+  background-color: var(--bg-0);
   position: fixed;   /* fixed so it covers the whole viewport */
   top: 0;
   left: 0;

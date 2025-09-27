@@ -1,4 +1,5 @@
 .home-screen {
+  padding-top: 80px;
   min-height: 100vh;
   background: var(--bg-0);
 }
@@ -8,7 +9,9 @@
   margin: 0 auto;
   padding: 2rem;
   z-index: 999;
-  position: relative;
+  position: fixed;
+  width: 100%;
+  transform: translateX(10%);
 
 }
 
