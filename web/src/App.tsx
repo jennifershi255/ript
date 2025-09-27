@@ -7,7 +7,7 @@ import {
 } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { WorkoutProvider } from "./context/WorkoutContext";
-import LoginScreen from "./screens/LoginScreen";
+import LandingPage from "./screens/LandingPage";
 import RegisterScreen from "./screens/RegisterScreen";
 import HomeScreen from "./screens/HomeScreen";
 import WorkoutScreen from "./screens/WorkoutScreen";
@@ -36,7 +36,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
     return <LoadingScreen />;
   }
 
-  return !isAuthenticated ? <>{children}</> : <Navigate to="/" />;
+  return !isAuthenticated ? <>{children}</> : <Navigate to="/home" />;
 }
 
 // Main App Content
@@ -45,15 +45,9 @@ function AppContent() {
     <Router>
       <div className="App">
         <Routes>
-          {/* Public Routes */}
-          <Route
-            path="/login"
-            element={
-              <PublicRoute>
-                <LoginScreen />
-              </PublicRoute>
-            }
-          />
+          {/* Landing Page - Always accessible */}
+          <Route path="/" element={<LandingPage />} />
+          
           <Route
             path="/register"
             element={
@@ -65,7 +59,7 @@ function AppContent() {
 
           {/* Protected Routes */}
           <Route
-            path="/"
+            path="/home"
             element={
               <ProtectedRoute>
                 <HomeScreen />
@@ -106,7 +100,7 @@ function AppContent() {
           />
 
           {/* Catch all route */}
-          <Route path="*" element={<Navigate to="/" />} />
+          <Route path="*" element={<Navigate to="/home" />} />
         </Routes>
       </div>
     </Router>
