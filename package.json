@@ -11,10 +11,20 @@
     "build": "cd web && npm run build",
     "start": "cd backend && npm start"
   },
-  "keywords": ["ai", "fitness", "computer-vision", "react", "web", "mongodb"],
+  "keywords": [
+    "ai",
+    "fitness",
+    "computer-vision",
+    "react",
+    "web",
+    "mongodb"
+  ],
   "author": "TechNova Team",
   "license": "MIT",
   "devDependencies": {
     "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "ogl": "^1.0.11"
   }
 }
