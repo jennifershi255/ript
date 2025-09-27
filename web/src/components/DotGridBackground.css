@@ -1,0 +1,65 @@
+:root {
+    /* Dot grid tunables */
+    --dot-grid-size: 26px;               /* spacing between dots */
+    --dot-size: 1.7px;                   /* dot radius */
+    --dot-color: rgba(255, 255, 255, 0.10);
+    --dot-color-strong: rgba(255, 255, 255, 0.14);
+  
+    /* Motion timings */
+    --dot-scroll-duration: 40s;          /* slower = calmer */
+  }
+  
+  .dotgrid-bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+  
+    /* 2 dot layers offset for crispness */
+    background-image:
+      radial-gradient(circle at center, var(--dot-color) var(--dot-size), transparent calc(var(--dot-size) + 0.2px)),
+      radial-gradient(circle at center, var(--dot-color-strong) var(--dot-size), transparent calc(var(--dot-size) + 0.2px));
+  
+    background-size:
+      var(--dot-grid-size) var(--dot-grid-size),
+      var(--dot-grid-size) var(--dot-grid-size);
+  
+    background-position:
+      0 0,
+      calc(var(--dot-grid-size) / 2) calc(var(--dot-grid-size) / 2);
+  
+    /* The motion */
+    animation: dotgrid-scroll var(--dot-scroll-duration) linear infinite;
+    will-change: background-position;
+  }
+  
+  /* Soft vignette so edges aren’t harsh */
+  .dotgrid-bg::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(120% 120% at 50% 50%, transparent 60%, rgba(0,0,0,0.25) 100%);
+  }
+  
+  /* honor reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .dotgrid-bg { animation: none !important; }
+  }
+  
+  @keyframes dotgrid-scroll {
+    0% {
+      background-position:
+        0 0,
+        calc(var(--dot-grid-size) / 2) calc(var(--dot-grid-size) / 2);
+    }
+    100% {
+      /* scroll diagonally; tweak multipliers to taste */
+      background-position:
+        calc(var(--dot-grid-size) * 3) calc(var(--dot-grid-size) * 3),
+        calc(var(--dot-grid-size) * 3.5 + var(--dot-grid-size) / 2)
+        calc(var(--dot-grid-size) * 3.5 + var(--dot-grid-size) / 2);
+    }
+  }
+  
