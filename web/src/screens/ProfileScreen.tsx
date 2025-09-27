@@ -54,11 +54,11 @@ const ProfileScreen: React.FC = () => {
   const handleDeleteAccount = async () => {
     if (
       window.confirm(
-        "Are you sure you want to delete your account? This action cannot be undone."
+        "are you sure you want to delete your account? this action cannot be undone."
       )
     ) {
       // In a real app, you would call an API to delete the account
-      alert("Account deletion would be implemented here");
+      alert("account deletion would be implemented here");
     }
   };
 
@@ -68,29 +68,29 @@ const ProfileScreen: React.FC = () => {
 
       <div className="profile-content">
         <div className="profile-header">
-          <h1>👤 Profile</h1>
-          <p>Manage your account and preferences</p>
+          <h1>welcome {user?.profile?.firstName || user?.username || "athlete"}</h1>
+          <p>manage your account and preferences</p>
         </div>
 
         <div className="profile-grid">
           {/* Profile Information */}
           <div className="profile-card">
             <div className="card-header">
-              <h3>Personal Information</h3>
+              <h3>personal information</h3>
               {!isEditing ? (
                 <button
                   onClick={() => setIsEditing(true)}
                   className="edit-button"
                 >
-                  Edit
+                  edit
                 </button>
               ) : (
                 <div className="edit-actions">
                   <button onClick={handleSave} className="save-button">
-                    Save
+                    save
                   </button>
                   <button onClick={handleCancel} className="cancel-button">
-                    Cancel
+                    cancel
                   </button>
                 </div>
               )}
@@ -99,7 +99,7 @@ const ProfileScreen: React.FC = () => {
             <div className="profile-form">
               <div className="form-row">
                 <div className="form-group">
-                  <label>First Name</label>
+                  <label>first name</label>
                   {isEditing ? (
                     <input
                       type="text"
@@ -114,7 +114,7 @@ const ProfileScreen: React.FC = () => {
                   )}
                 </div>
                 <div className="form-group">
-                  <label>Last Name</label>
+                  <label>last name</label>
                   {isEditing ? (
                     <input
                       type="text"
@@ -131,18 +131,18 @@ const ProfileScreen: React.FC = () => {
               </div>
 
               <div className="form-group">
-                <label>Email</label>
+                <label>email</label>
                 <div className="form-value">{user?.email}</div>
               </div>
 
               <div className="form-group">
-                <label>Username</label>
+                <label>username</label>
                 <div className="form-value">{user?.username}</div>
               </div>
 
               <div className="form-row">
                 <div className="form-group">
-                  <label>Age</label>
+                  <label>age</label>
                   {isEditing ? (
                     <input
                       type="number"
@@ -158,7 +158,7 @@ const ProfileScreen: React.FC = () => {
                   )}
                 </div>
                 <div className="form-group">
-                  <label>Height (cm)</label>
+                  <label>height (cm)</label>
                   {isEditing ? (
                     <input
                       type="number"
@@ -179,7 +179,7 @@ const ProfileScreen: React.FC = () => {
 
               <div className="form-row">
                 <div className="form-group">
-                  <label>Weight (kg)</label>
+                  <label>weight (kg)</label>
                   {isEditing ? (
                     <input
                       type="number"
@@ -197,16 +197,16 @@ const ProfileScreen: React.FC = () => {
                   )}
                 </div>
                 <div className="form-group">
-                  <label>Fitness Level</label>
+                  <label>fitness level</label>
                   {isEditing ? (
                     <select
                       name="fitnessLevel"
                       value={formData.fitnessLevel}
                       onChange={handleInputChange}
                     >
-                      <option value="beginner">Beginner</option>
-                      <option value="intermediate">Intermediate</option>
-                      <option value="advanced">Advanced</option>
+                      <option value="beginner">beginner</option>
+                      <option value="intermediate">intermediate</option>
+                      <option value="advanced">advanced</option>
                     </select>
                   ) : (
                     <div className="form-value fitness-level">
@@ -220,28 +220,28 @@ const ProfileScreen: React.FC = () => {
 
           {/* Account Stats */}
           <div className="profile-card">
-            <h3>Account Statistics</h3>
+            <h3 style={{ marginBottom: "20px" }}>account statistics</h3>
             <div className="stats-list">
               <div className="stat-item">
-                <span className="stat-label">Total Workouts</span>
+                <span className="stat-label">total workouts</span>
                 <span className="stat-value">
                   {user?.stats?.totalWorkouts || 0}
                 </span>
               </div>
               <div className="stat-item">
-                <span className="stat-label">Total Reps</span>
+                <span className="stat-label">total reps</span>
                 <span className="stat-value">
                   {user?.stats?.totalReps || 0}
                 </span>
               </div>
               <div className="stat-item">
-                <span className="stat-label">Average Form</span>
+                <span className="stat-label">average form</span>
                 <span className="stat-value">
                   {user?.stats?.averageFormAccuracy || 0}%
                 </span>
               </div>
               <div className="stat-item">
-                <span className="stat-label">Current Streak</span>
+                <span className="stat-label">current streak</span>
                 <span className="stat-value">
                   {user?.stats?.streakDays || 0} days
                 </span>
@@ -251,13 +251,13 @@ const ProfileScreen: React.FC = () => {
 
           {/* Account Actions */}
           <div className="profile-card">
-            <h3>Account Actions</h3>
+            <h3 style={{ marginBottom: "20px" }}>account actions</h3>
             <div className="action-buttons">
               <button onClick={logout} className="logout-button">
-                Logout
+                logout
               </button>
               <button onClick={handleDeleteAccount} className="delete-button">
-                Delete Account
+                delete account
               </button>
             </div>
           </div>
