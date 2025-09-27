@@ -519,8 +519,7 @@ const WorkoutScreen: React.FC = () => {
 
       <div className="workout-content">
         <div className="workout-header">
-          <h1>🏋️‍♀️ {exercise?.toUpperCase()} Workout</h1>
-          <p>AI-powered form analysis coming soon!</p>
+          <h1>{exercise?.toLowerCase()} workout analysis</h1>
         </div>
 
         <div className="workout-placeholder">
@@ -588,8 +587,8 @@ const WorkoutScreen: React.FC = () => {
             ) : (
               <>
                 <div className="camera-icon">📹</div>
-                <h3>Camera Feed</h3>
-                <p>Click "Start Recording" to begin pose detection</p>
+                <h3>camera feed</h3>
+                <p>click "start recording" to begin pose detection</p>
               </>
             )}
             {isRecording && (
@@ -602,7 +601,7 @@ const WorkoutScreen: React.FC = () => {
 
           <div className="analysis-section">
             <div className="feedback-panel">
-              <h3>Real-time Analysis</h3>
+              <h3>real-time analysis</h3>
               {currentAnalysis ? (
                 <>
                   <div className="analysis-phase">
@@ -681,7 +680,7 @@ const WorkoutScreen: React.FC = () => {
                 </>
               ) : (
                 <div className="no-analysis">
-                  <p>Start recording to see real-time form analysis</p>
+                  <p>start recording to see real-time form analysis</p>
                 </div>
               )}
             </div>
