@@ -222,35 +222,112 @@ export class PoseDetector {
     
     const avgKneeAngle = (angles.leftKneeAngle + angles.rightKneeAngle) / 2;
     const avgHipAngle = (angles.leftHipAngle + angles.rightHipAngle) / 2;
-    
-    // Check knee alignment
     const kneeDifference = Math.abs(angles.leftKneeAngle - angles.rightKneeAngle);
-    if (kneeDifference > 15) {
-      feedback.push("Keep your knees aligned");
-      formScore -= 15;
+    
+    // Phase-specific feedback
+    switch (phase) {
+      case 'starting':
+        if (avgKneeAngle < 170) {
+          feedback.push("Stand up straight to begin");
+          formScore -= 10;
+        } else {
+          feedback.push("Ready to squat! Start going down");
+        }
+        break;
+        
+      case 'descending':
+        // Check knee alignment during descent
+        if (kneeDifference > 20) {
+          feedback.push("KNEES: Keep both knees aligned!");
+          formScore -= 20;
+        }
+        
+        // Check back posture during descent
+        if (angles.backAngle > this.SQUAT_THRESHOLDS.BACK_ANGLE_MAX) {
+          feedback.push("BACK: Keep chest up, don't lean forward!");
+          formScore -= 25;
+        }
+        
+        // Check if going down too fast
+        if (avgKneeAngle < 120) {
+          feedback.push("Good depth! Keep going down slowly");
+        } else {
+          feedback.push("Keep going down - bend your knees more");
+        }
+        break;
+        
+      case 'bottom':
+        // Critical depth check
+        if (avgKneeAngle > 110) {
+          feedback.push("TOO HIGH: Go deeper! Thighs parallel to ground");
+          formScore -= 30;
+        } else if (avgKneeAngle > 90) {
+          feedback.push("DEEPER: Almost there, go a bit lower");
+          formScore -= 15;
+        } else {
+          feedback.push("PERFECT DEPTH: Great squat!");
+        }
+        
+        // Knee alignment at bottom
+        if (kneeDifference > 15) {
+          feedback.push("KNEES: Keep knees aligned at bottom!");
+          formScore -= 20;
+        }
+        
+        // Back posture at bottom
+        if (angles.backAngle > this.SQUAT_THRESHOLDS.BACK_ANGLE_MAX) {
+          feedback.push("BACK: Keep chest up, core tight!");
+          formScore -= 25;
+        }
+        
+        // Hip positioning
+        if (avgHipAngle < this.SQUAT_THRESHOLDS.HIP_ANGLE_MIN) {
+          feedback.push("HIPS: Push hips back more");
+          formScore -= 15;
+        }
+        break;
+        
+      case 'ascending':
+        // Check for proper ascent
+        if (angles.backAngle > this.SQUAT_THRESHOLDS.BACK_ANGLE_MAX) {
+          feedback.push("BACK: Keep chest up while rising!");
+          formScore -= 20;
+        }
+        
+        if (kneeDifference > 15) {
+          feedback.push("KNEES: Keep knees aligned while rising");
+          formScore -= 15;
+        }
+        
+        if (avgKneeAngle > 120) {
+          feedback.push("Great! Keep pushing up to standing");
+        } else {
+          feedback.push("Push through your heels, drive up!");
+        }
+        break;
     }
     
-    // Check squat depth
-    if (phase === 'bottom' && avgKneeAngle > 100) {
-      feedback.push("Go deeper - thighs should be parallel to ground");
-      formScore -= 20;
+    // Overall posture warnings (always check)
+    if (kneeDifference > 25) {
+      feedback.push("CRITICAL: Major knee misalignment!");
+      formScore -= 30;
     }
     
-    // Check back posture
-    if (angles.backAngle > this.SQUAT_THRESHOLDS.BACK_ANGLE_MAX) {
-      feedback.push("Keep your back straight - don't lean forward too much");
-      formScore -= 25;
+    if (angles.backAngle > 160) {
+      feedback.push("CRITICAL: Back too rounded!");
+      formScore -= 35;
     }
     
-    // Check hip angle
-    if (avgHipAngle < this.SQUAT_THRESHOLDS.HIP_ANGLE_MIN && phase === 'bottom') {
-      feedback.push("Push your hips back more");
-      formScore -= 15;
+    // Positive reinforcement for excellent form
+    if (formScore >= 90 && phase === 'bottom') {
+      feedback.push("🏆 EXCELLENT FORM! You're crushing it!");
+    } else if (formScore >= 80) {
+      feedback.push("Good form! Minor adjustments needed");
     }
     
-    // Positive feedback for good form
+    // If no specific feedback, give encouragement
     if (feedback.length === 0) {
-      feedback.push("Great form! Keep it up!");
+      feedback.push("Keep going! You're doing great!");
     }
     
     return {
@@ -356,7 +433,12 @@ export class PoseDetector {
     this.canvasCtx.fillRect(10, 10, 100, 50);
     this.canvasCtx.fillStyle = '#FFFFFF';
     this.canvasCtx.font = '16px Arial';
-    this.canvasCtx.fillText('Pose Active', 15, 35);
+    
+    // Save context, flip text back to normal, then restore
+    this.canvasCtx.save();
+    this.canvasCtx.scale(-1, 1);
+    this.canvasCtx.fillText('Pose Active', -105, 35);
+    this.canvasCtx.restore();
     
     try {
       // Draw pose connections
@@ -396,19 +478,27 @@ export class PoseDetector {
     const leftKnee = landmarks[POSE_LANDMARK_INDICES.LEFT_KNEE];
     const rightKnee = landmarks[POSE_LANDMARK_INDICES.RIGHT_KNEE];
     
+    // Save context for text flipping
+    this.canvasCtx.save();
+    this.canvasCtx.scale(-1, 1);
+    
     if (leftKnee.visibility > 0.5) {
       const x = leftKnee.x * width;
       const y = leftKnee.y * height;
-      this.canvasCtx.strokeText(`${Math.round(angles.leftKneeAngle)}°`, x + 10, y - 10);
-      this.canvasCtx.fillText(`${Math.round(angles.leftKneeAngle)}°`, x + 10, y - 10);
+      const text = `${Math.round(angles.leftKneeAngle)}°`;
+      this.canvasCtx.strokeText(text, -(x + 10 + 30), y - 10);
+      this.canvasCtx.fillText(text, -(x + 10 + 30), y - 10);
     }
     
     if (rightKnee.visibility > 0.5) {
       const x = rightKnee.x * width;
       const y = rightKnee.y * height;
-      this.canvasCtx.strokeText(`${Math.round(angles.rightKneeAngle)}°`, x - 40, y - 10);
-      this.canvasCtx.fillText(`${Math.round(angles.rightKneeAngle)}°`, x - 40, y - 10);
+      const text = `${Math.round(angles.rightKneeAngle)}°`;
+      this.canvasCtx.strokeText(text, -(x - 40 + 30), y - 10);
+      this.canvasCtx.fillText(text, -(x - 40 + 30), y - 10);
     }
+    
+    this.canvasCtx.restore();
   }
 
   // Initialize pose detection with video element
@@ -451,7 +541,14 @@ export class PoseDetector {
     // Initialize camera
     this.camera = new Camera(videoElement, {
       onFrame: async () => {
-        await this.pose.send({ image: videoElement });
+        // Check if pose detector is still valid before sending
+        if (!this.isDisposed && this.pose && this.isInitialized) {
+          try {
+            await this.pose.send({ image: videoElement });
+          } catch (error) {
+            console.warn('Error sending frame to pose detector:', error);
+          }
+        }
       },
       width,
       height
@@ -472,8 +569,13 @@ export class PoseDetector {
 
   // Stop pose detection
   public stop(): void {
-    if (this.camera) {
-      this.camera.stop();
+    console.log('Stopping pose detection...');
+    try {
+      if (this.camera) {
+        this.camera.stop();
+      }
+    } catch (error) {
+      console.warn('Error stopping camera:', error);
     }
   }
 
@@ -504,8 +606,16 @@ export class PoseDetector {
     }
     
     console.log('Disposing PoseDetector...');
-    this.isDisposed = true;
     
+    // Set disposed flag first to prevent any new operations
+    this.isDisposed = true;
+    this.isInitialized = false;
+    
+    // Clear callbacks first to prevent any pending calls
+    this.onResultsCallback = null;
+    this.onAnalysisCallback = null;
+    
+    // Stop camera first
     try {
       if (this.camera) {
         console.log('Stopping camera...');
@@ -516,23 +626,23 @@ export class PoseDetector {
       console.warn('Error stopping camera:', error);
     }
     
-    try {
-      if (this.pose && this.isInitialized) {
-        console.log('Closing pose...');
-        this.pose.close();
-        this.pose = null as any;
+    // Small delay to ensure camera stops before closing pose
+    setTimeout(() => {
+      try {
+        if (this.pose) {
+          console.log('Closing pose...');
+          this.pose.close();
+          this.pose = null as any;
+        }
+      } catch (error) {
+        console.warn('Error closing pose:', error);
       }
-    } catch (error) {
-      console.warn('Error closing pose:', error);
-    }
+    }, 100);
     
     // Clear references
     this.videoElement = null;
     this.canvasElement = null;
     this.canvasCtx = null;
-    this.onResultsCallback = null;
-    this.onAnalysisCallback = null;
-    this.isInitialized = false;
     
     console.log('PoseDetector disposed successfully');
   }

@@ -37,9 +37,8 @@ interface AnalyticsResponse {
 // Base API URL - Dynamic configuration for better connectivity
 const getBaseURL = () => {
   if (process.env.NODE_ENV === 'development') {
-    // For development, we'll use a mock API since network connectivity is blocked
-    // In a real deployment, this would be your actual backend URL
-    return 'http://localhost:3000/api'; // This will be mocked for now
+    // Development backend URL
+    return 'http://localhost:3001/api';
   }
   return 'https://your-production-api.com/api';
 };
@@ -47,7 +46,7 @@ const getBaseURL = () => {
 const BASE_URL = getBaseURL();
 
 // Flag to determine if we should use mock API
-const USE_MOCK_API = true; // Set to false when backend is accessible
+const USE_MOCK_API = false; // Set to false when backend is accessible
 
 // Create axios instance
 const api = axios.create({
@@ -226,13 +225,13 @@ export const workoutAPI = {
   },
 
   // End workout session
-  endSession: async (sessionId: string): Promise<WorkoutSessionResponse> => {
+  endSession: async (sessionId: string, finalStats?: any): Promise<WorkoutSessionResponse> => {
     if (USE_MOCK_API) {
-      return await mockWorkoutAPI.endSession(sessionId);
+      return await mockWorkoutAPI.endSession(sessionId, finalStats);
     }
     
     try {
-      const response = await api.put(`/workouts/${sessionId}/end`);
+      const response = await api.put(`/workouts/${sessionId}/end`, finalStats || {});
       return response as unknown as WorkoutSessionResponse;
     } catch (error) {
       throw error;

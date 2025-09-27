@@ -1,4 +1,5 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const { body, validationResult } = require('express-validator');
 const WorkoutSession = require('../models/WorkoutSession');
 const User = require('../models/User');
@@ -70,19 +71,29 @@ router.put('/:sessionId/end', auth, async (req, res) => {
       });
     }
 
+    // Update session with final statistics from request body if provided
+    const { totalReps, correctReps, formAccuracy, duration } = req.body;
+    
+    if (totalReps !== undefined) session.totalReps = totalReps;
+    if (correctReps !== undefined) session.correctReps = correctReps;
+    if (formAccuracy !== undefined) session.formAccuracy = formAccuracy;
+    if (duration !== undefined) session.duration = duration;
+
     // End the session
     session.endSession();
     await session.save();
 
     // Update user stats
     const user = await User.findById(req.user.id);
-    user.updateStats({
-      totalReps: session.totalReps,
-      formAccuracy: session.formAccuracy
-    });
-    await user.save();
+    if (user.updateStats) {
+      user.updateStats({
+        totalReps: session.totalReps,
+        formAccuracy: session.formAccuracy
+      });
+      await user.save();
+    }
 
-    logger.info(`Workout session ended: ${session._id}`);
+    logger.info(`Workout session ended: ${session._id} - ${session.totalReps} reps, ${session.formAccuracy}% accuracy`);
 
     res.status(200).json({
       success: true,
@@ -268,6 +279,8 @@ router.get('/analytics/summary', auth, async (req, res) => {
   try {
     const { period = '30d' } = req.query;
     
+    logger.info(`Getting analytics for user ${req.user.id} for period ${period}`);
+    
     // Calculate date range
     const now = new Date();
     let startDate;
@@ -286,11 +299,19 @@ router.get('/analytics/summary', auth, async (req, res) => {
         startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     }
 
+    // First, let's check how many sessions exist for this user
+    const totalSessionsCount = await WorkoutSession.countDocuments({ 
+      userId: new mongoose.Types.ObjectId(req.user.id) 
+    });
+    
+    logger.info(`Total sessions for user ${req.user.id}: ${totalSessionsCount}`);
+
     const analytics = await WorkoutSession.aggregate([
       {
         $match: {
-          userId: req.user._id,
-          startTime: { $gte: startDate }
+          userId: new mongoose.Types.ObjectId(req.user.id),
+          startTime: { $gte: startDate },
+          endTime: { $exists: true } // Only include completed sessions
         }
       },
       {
@@ -310,14 +331,18 @@ router.get('/analytics/summary', auth, async (req, res) => {
       }
     ]);
 
+    const result = analytics[0] || {
+      totalSessions: 0,
+      totalReps: 0,
+      averageFormAccuracy: 0,
+      exerciseBreakdown: []
+    };
+
+    logger.info(`Analytics result for user ${req.user.id}:`, result);
+
     res.status(200).json({
       success: true,
-      analytics: analytics[0] || {
-        totalSessions: 0,
-        totalReps: 0,
-        averageFormAccuracy: 0,
-        exerciseBreakdown: []
-      }
+      analytics: result
     });
 
   } catch (error) {
