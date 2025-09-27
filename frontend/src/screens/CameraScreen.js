@@ -80,17 +80,30 @@ export default function CameraScreen({ route, navigation }) {
     }
   };
 
-  // Calculate angle between three points
+  // Calculate angle between three points (interior angle at point2)
   const calculateAngle = (point1, point2, point3) => {
     if (!point1 || !point2 || !point3) return null;
     
-    const radians = Math.atan2(point3.y - point2.y, point3.x - point2.x) - 
-                   Math.atan2(point1.y - point2.y, point1.x - point2.x);
-    let angle = Math.abs(radians * 180.0 / Math.PI);
+    // Calculate vectors from point2 to point1 and point2 to point3
+    const vector1 = {
+      x: point1.x - point2.x,
+      y: point1.y - point2.y
+    };
+    const vector2 = {
+      x: point3.x - point2.x,
+      y: point3.y - point2.y
+    };
     
-    if (angle > 180.0) {
-      angle = 360 - angle;
-    }
+    // Calculate dot product and magnitudes
+    const dotProduct = vector1.x * vector2.x + vector1.y * vector2.y;
+    const magnitude1 = Math.sqrt(vector1.x * vector1.x + vector1.y * vector1.y);
+    const magnitude2 = Math.sqrt(vector2.x * vector2.x + vector2.y * vector2.y);
+    
+    if (magnitude1 === 0 || magnitude2 === 0) return null;
+    
+    // Calculate angle using dot product formula
+    const cosAngle = dotProduct / (magnitude1 * magnitude2);
+    const angle = Math.acos(Math.max(-1, Math.min(1, cosAngle))) * 180.0 / Math.PI;
     
     return angle;
   };
@@ -98,6 +111,15 @@ export default function CameraScreen({ route, navigation }) {
   // Detect squat phases based on knee angle and hip position
   const detectSquatPhase = (keypoints) => {
     if (!keypoints) return null;
+
+    // Check if required keypoints exist and have good visibility
+    const requiredPoints = ['left_hip', 'left_knee', 'left_ankle', 'right_hip', 'right_knee', 'right_ankle'];
+    const missingPoints = requiredPoints.filter(point => !keypoints[point] || keypoints[point].visibility < 0.5);
+    
+    if (missingPoints.length > 0) {
+      console.log('Missing or low confidence keypoints:', missingPoints);
+      return null;
+    }
 
     const leftHip = keypoints.left_hip;
     const leftKnee = keypoints.left_knee;
@@ -114,36 +136,43 @@ export default function CameraScreen({ route, navigation }) {
 
     const avgKneeAngle = (leftKneeAngle + rightKneeAngle) / 2;
     
+    // Debug logging
+    console.log(`Knee angles - Left: ${leftKneeAngle?.toFixed(1)}°, Right: ${rightKneeAngle?.toFixed(1)}°, Avg: ${avgKneeAngle?.toFixed(1)}°, Current state: ${squatState}`);
+    
     // Squat phase detection logic
     let newPhase = 'standing';
     let newState = squatState;
     let shouldIncrementRep = false;
 
-    if (avgKneeAngle > 160) {
+    if (avgKneeAngle > 150) {
       // Standing position
       if (squatState === 'ascending' && repInProgress) {
         // Completed a full rep
         shouldIncrementRep = true;
         setRepInProgress(false);
         newPhase = 'completed';
+        console.log('Rep completed! Knee angle:', avgKneeAngle);
       } else {
         newPhase = 'standing';
       }
       newState = 'standing';
-    } else if (avgKneeAngle > 120 && avgKneeAngle <= 160) {
+    } else if (avgKneeAngle > 100 && avgKneeAngle <= 150) {
       // Descending or ascending
       if (squatState === 'standing') {
         newState = 'descending';
         newPhase = 'descending';
         setRepInProgress(true);
+        console.log('Starting squat descent, knee angle:', avgKneeAngle);
       } else if (squatState === 'bottom') {
         newState = 'ascending';
         newPhase = 'ascending';
+        console.log('Ascending from squat, knee angle:', avgKneeAngle);
       }
-    } else if (avgKneeAngle <= 120) {
+    } else if (avgKneeAngle <= 100) {
       // Bottom position
       newState = 'bottom';
       newPhase = 'bottom';
+      console.log('At squat bottom, knee angle:', avgKneeAngle);
     }
 
     setSquatState(newState);
@@ -196,6 +225,9 @@ export default function CameraScreen({ route, navigation }) {
       if (poseData && poseData.keypoints) {
         setCurrentPose(poseData);
 
+        // Debug: Log available keypoints
+        console.log('Available keypoints:', Object.keys(poseData.keypoints));
+
         // Detect squat phase locally
         const squatAnalysis = detectSquatPhase(poseData.keypoints);
         
@@ -210,18 +242,21 @@ export default function CameraScreen({ route, navigation }) {
             calculatedFormScore = Math.max(70, 100 - (squatAnalysis.kneeAngle - 170) * 3);
           }
           
-          setFormScore(calculatedFormScore);
+          // Round form score to whole number
+          setFormScore(Math.round(calculatedFormScore));
           
           // Generate feedback based on form
           const feedbackMessages = [];
-          if (squatAnalysis.kneeAngle < 90) {
-            feedbackMessages.push("Go deeper! Squat lower.");
-          } else if (squatAnalysis.kneeAngle > 170) {
+          if (squatAnalysis.kneeAngle < 80) {
+            feedbackMessages.push("Great depth! Perfect squat.");
+          } else if (squatAnalysis.kneeAngle > 160) {
             feedbackMessages.push("Good form! Keep it up.");
           } else if (squatAnalysis.phase === 'bottom') {
             feedbackMessages.push("Perfect depth! Now push up.");
           } else if (squatAnalysis.phase === 'ascending') {
             feedbackMessages.push("Drive through your heels!");
+          } else if (squatAnalysis.phase === 'descending') {
+            feedbackMessages.push("Keep going down!");
           }
           
           setFeedback(feedbackMessages);
@@ -466,7 +501,7 @@ export default function CameraScreen({ route, navigation }) {
           </View>
           
           <View style={styles.formScore}>
-            <Text style={styles.formScoreText}>{formScore}%</Text>
+                <Text style={styles.formScoreText}>{Math.round(formScore)}%</Text>
             <Text style={styles.formScoreLabel}>Form</Text>
           </View>
         </View>
