@@ -1,0 +1,36 @@
+{
+  "expo": {
+    "name": "AI Workout Coach",
+    "slug": "ai-workout-coach",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#667eea",
+      "resizeMode": "contain"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app uses the camera to analyze your workout form in real-time.",
+        "NSMicrophoneUsageDescription": "This app uses the microphone to provide audio feedback during workouts."
+      }
+    },
+    "android": {
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO",
+        "WRITE_EXTERNAL_STORAGE"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow AI Workout Coach to access your camera to analyze workout form."
+        }
+      ]
+    ],
+    "sdkVersion": "54.0.0"
+  }
+}
