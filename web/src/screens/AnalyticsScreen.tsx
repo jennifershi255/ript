@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo } from "react";
 import Navigation from "../components/Navigation";
 import { useWorkout } from "../context/WorkoutContext";
+import DotGrid from "../components/DotGrid";
 import "./AnalyticsScreen.css";
 
 /* ------------------------ Utilities ------------------------ */
@@ -41,26 +42,23 @@ const HeatmapCalendar: React.FC<HeatmapProps> = ({ dataByDay, weeks = 26 }) => {
   const level = (c: number) =>
     c === 0 ? 0 : c <= step ? 1 : c <= step * 2 ? 2 : c <= step * 3 ? 3 : 4;
 
-  // weeks -> columns
   const columns: { date: string; count: number }[][] = [];
   for (let w = 0; w < weeks; w++) {
     columns.push(cells.slice(w * 7, w * 7 + 7));
   }
 
-  const dow = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
-
   return (
     <div className="heatmap-wrap">
       <div className="heatmap">
         <div className="heatmap-rows">
-          {dow.map((d, i) => (
+          {["sun", "mon", "tue", "wed", "thu", "fri", "sat"].map((d, i) => (
             <div key={i} className="heatmap-rowlabel">
               {d}
             </div>
           ))}
         </div>
 
-        <div className="heatmap-grid" aria-label="activity calendar">
+        <div className="heatmap-grid" aria-label="Activity calendar">
           {columns.map((week, wi) => (
             <div className="heatmap-col" key={wi}>
               {week.map((day, di) => {
@@ -149,8 +147,21 @@ const AnalyticsScreen: React.FC = () => {
 
   return (
     <div className="analytics-screen">
-      {/* no extra bg div—animation is handled by body::before */}
+      {/* Fullscreen background grid */}
+      <DotGrid
+      dotSize={6}          // smaller dots
+      gap={24}             // more spacing between dots
+      baseColor="#191717"
+      activeColor="83EBFC"
+      proximity={200}
+      shockRadius={250}
+      shockStrength={30}
+      resistance={400}
+      returnDuration={1.5}
+      className="dot-grid-bg"
+    />
 
+      {/* Foreground */}
       <Navigation />
 
       <div className="analytics-content">
@@ -162,7 +173,7 @@ const AnalyticsScreen: React.FC = () => {
         <section className="overview-split">
           {/* LEFT */}
           <aside className="overview-left">
-            <h3 className="section-title">overall statistics</h3>
+            <h3>overall statistics</h3>
             <div className="stat-stack">
               <div className="stat-item stat-tile">
                 <div className="stat-icon">🏆</div>
@@ -212,50 +223,43 @@ const AnalyticsScreen: React.FC = () => {
 
         {/* Recent Workouts */}
         <article className="analytics-card recent">
-  <h3 className="recent-title">recent workouts</h3>
+          <h3 className="recent-title">recent workouts</h3>
 
-  <div className="workout-list">
-    {workoutHistory?.length ? (
-      workoutHistory.slice(0, 5).map((w: any, i: number) => {
-        const dateStr = new Date(w.startTime).toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-          year: "numeric",
-        });
+          <div className="workout-list">
+            {workoutHistory?.length ? (
+              workoutHistory.slice(0, 5).map((w: any, i: number) => (
+                <div key={w.startTime + i} className="workout-item">
+                  <div className="workout-exercise">
+                    <span className="emoji">🏋️</span>
+                    <span className="exercise-name">{w.exercise}</span>
+                  </div>
 
-        return (
-          <div key={w.startTime + i} className="workout-row">
-            {/* 1) Exercise */}
-            <div className="cell cell--exercise">
-              <span className="emoji" aria-hidden>🏋️</span>
-              <span className="exercise">{w.exercise}</span>
-            </div>
+                  <div className="workout-date">
+                    {new Date(w.startTime).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </div>
 
-            {/* 2) Date */}
-            <div className="cell cell--date">
-              <time>{dateStr}</time>
-            </div>
+                  <div className="workout-reps">
+                    <span className="metric-number">{fmt(w.totalReps)}</span>
+                    <span className="metric-label">reps</span>
+                  </div>
 
-            {/* 3) Reps */}
-            <div className="cell cell--reps">
-              <span className="value">{fmt(w.totalReps)}</span>
-              <span className="unit">reps</span>
-            </div>
-
-            {/* 4) Accuracy */}
-            <div className="cell cell--accuracy">
-              <span className="value">{Math.round(w.formAccuracy ?? 0)}</span>
-              <span className="unit">%</span>
-            </div>
+                  <div className="workout-accuracy">
+                    <span className="metric-number">
+                      {Math.round(w.formAccuracy ?? 0)}
+                    </span>
+                    <span className="metric-label">%</span>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="no-data">no workout history available yet</p>
+            )}
           </div>
-        );
-      })
-    ) : (
-      <p className="no-data">no workout history yet</p>
-    )}
-  </div>
-</article>
-
+        </article>
       </div>
     </div>
   );
