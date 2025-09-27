@@ -25,8 +25,16 @@ const WorkoutScreen: React.FC = () => {
     null
   );
   const [showPoseOverlay, setShowPoseOverlay] = useState(true);
+  const [totalReps, setTotalReps] = useState(0);
+  const [formScoreHistory, setFormScoreHistory] = useState<number[]>([]);
+  const [totalFormScoreSum, setTotalFormScoreSum] = useState(0);
+  const [formScoreCount, setFormScoreCount] = useState(0);
+  const [stableFeedback, setStableFeedback] = useState<string[]>([]);
+  const [lastBottomTime, setLastBottomTime] = useState<number>(0);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const feedbackTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const previousPhaseRef = useRef<string | undefined>(undefined);
 
   const handleEndWorkout = async () => {
     console.log("Ending workout...");
@@ -82,8 +90,15 @@ const WorkoutScreen: React.FC = () => {
   };
 
   const handleStartRecording = async () => {
+    console.log(
+      "handleStartRecording called, isCamera:",
+      isCamera,
+      "isRecording:",
+      isRecording
+    );
     try {
       if (!isCamera) {
+        console.log("Requesting camera access...");
         // Request camera access
         const mediaStream = await navigator.mediaDevices.getUserMedia({
           video: {
@@ -103,13 +118,33 @@ const WorkoutScreen: React.FC = () => {
           // Ensure video plays
           videoRef.current.play().catch(console.error);
         }
+      } else {
+        console.log("Camera already active");
       }
 
+      // Reset workout stats
+      console.log("Resetting workout stats");
+      setTotalReps(0);
+      setFormScoreHistory([]);
+      setTotalFormScoreSum(0);
+      setFormScoreCount(0);
+      setStableFeedback([]);
+      setLastBottomTime(0);
+      previousPhaseRef.current = undefined;
+
+      console.log("Calling startRecording()");
       startRecording();
 
       // Initialize pose detection after camera is ready
       if (videoRef.current && canvasRef.current && !poseDetector) {
+        console.log("Initializing pose detection");
         initializePoseDetection();
+      } else {
+        console.log("Pose detection not initialized:", {
+          videoRef: !!videoRef.current,
+          canvasRef: !!canvasRef.current,
+          poseDetector: !!poseDetector,
+        });
       }
     } catch (error) {
       console.error("Error accessing camera:", error);
@@ -316,10 +351,66 @@ const WorkoutScreen: React.FC = () => {
 
   // Handle squat analysis results
   const handleSquatAnalysis = (analysis: SquatAnalysis) => {
+    console.log("Squat analysis received:", analysis);
+
+    // Get previous phase from ref (synchronous)
+    const previousPhase = previousPhaseRef.current;
+    console.log(
+      `Phase: ${analysis.phase}, Previous Phase: ${previousPhase}, TotalReps: ${totalReps}`
+    );
+
+    const currentTime = Date.now();
+
+    // Count rep when transitioning from "bottom" to "ascending"
+    // This means the user completed the squat and is coming back up
+    if (
+      previousPhase === "bottom" &&
+      analysis.phase === "ascending" &&
+      currentTime - lastBottomTime > 1000 // 1 second cooldown between reps
+    ) {
+      console.log(
+        `🎉 REP COMPLETED! Transition from bottom to ascending. Incrementing reps from ${totalReps} to ${
+          totalReps + 1
+        }`
+      );
+      setTotalReps((prev) => prev + 1);
+      setLastBottomTime(currentTime);
+    }
+
+    // Update previous phase ref for next call (synchronous)
+    previousPhaseRef.current = analysis.phase;
+
+    // Update current analysis state
     setCurrentAnalysis(analysis);
 
-    // Update rep count in workout context if it's different
-    // Note: We're using the MediaPipe detector's rep count as the source of truth
+    // Stabilize feedback messages - only update every 2 seconds
+    if (feedbackTimeoutRef.current) {
+      clearTimeout(feedbackTimeoutRef.current);
+    }
+
+    feedbackTimeoutRef.current = setTimeout(() => {
+      setStableFeedback(analysis.feedback);
+    }, 100); // Small delay to prevent rapid changes
+
+    // Track form scores for cumulative average calculation
+    if (analysis.formScore > 0) {
+      console.log(`Adding form score: ${analysis.formScore}`);
+      setFormScoreHistory((prev) => {
+        const newHistory = [...prev, analysis.formScore];
+        // Keep only last 10 scores for display purposes
+        return newHistory.slice(-10);
+      });
+
+      // Update cumulative totals
+      setTotalFormScoreSum((prev) => prev + analysis.formScore);
+      setFormScoreCount((prev) => prev + 1);
+    }
+  };
+
+  // Helper function to calculate cumulative average form score
+  const getCumulativeFormScore = (): number => {
+    if (formScoreCount === 0) return 0;
+    return Math.round(totalFormScoreSum / formScoreCount);
   };
 
   // Toggle pose overlay visibility
@@ -390,6 +481,12 @@ const WorkoutScreen: React.FC = () => {
   useEffect(() => {
     return () => {
       console.log("Component unmounting, cleaning up...");
+
+      // Clear feedback timeout
+      if (feedbackTimeoutRef.current) {
+        clearTimeout(feedbackTimeoutRef.current);
+        feedbackTimeoutRef.current = null;
+      }
 
       try {
         if (poseDetector) {
@@ -510,7 +607,7 @@ const WorkoutScreen: React.FC = () => {
                     </span>
                   </div>
                   <div className="feedback-messages">
-                    {currentAnalysis.feedback.map((message, index) => (
+                    {stableFeedback.map((message, index) => (
                       <div key={index} className="feedback-item">
                         <span className="feedback-icon">
                           {currentAnalysis.isGoodForm ? "✅" : "⚠️"}
@@ -549,20 +646,12 @@ const WorkoutScreen: React.FC = () => {
 
             <div className="workout-stats">
               <div className="stat-box">
-                <div className="stat-number">
-                  {currentAnalysis ? currentAnalysis.repCount : 0}
-                </div>
+                <div className="stat-number">{totalReps}</div>
                 <div className="stat-label">Reps</div>
               </div>
               <div className="stat-box">
-                <div className="stat-number">
-                  {currentAnalysis ? `${currentAnalysis.formScore}%` : "0%"}
-                </div>
+                <div className="stat-number">{getCumulativeFormScore()}%</div>
                 <div className="stat-label">Form Score</div>
-              </div>
-              <div className="stat-box">
-                <div className="stat-number">2:30</div>
-                <div className="stat-label">Duration</div>
               </div>
             </div>
           </div>
