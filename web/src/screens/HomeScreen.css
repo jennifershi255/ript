@@ -102,6 +102,14 @@
   gap: 1rem;
 }
 
+.exercises-grid-2x2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
 .exercise-card {
   animation: fadeInUp 0.6s ease-out both;
 }
@@ -112,11 +120,17 @@
   border-radius: 16px;
   padding: 1rem;
   height: 100%;
+  min-height: 200px;
   display: flex;
   flex-direction: column;
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+}
+
+.exercises-grid-2x2 .exercise-card-container {
+  padding: 2rem;
+  min-height: 250px;
 }
 
 .exercise-card-container::before {
@@ -154,11 +168,20 @@
   line-height: 1.2;
 }
 
+.exercises-grid-2x2 .exercise-name {
+  font-size: 1.6rem;
+  margin-bottom: 1rem;
+}
+
 .exercise-description {
   font-size: 0.8rem;
   color: var(--ink);
   margin: 0;
   line-height: 1.4;
+}
+
+.exercises-grid-2x2 .exercise-description {
+  font-size: 1rem;
 }
 
 .exercise-card-body {
@@ -210,6 +233,11 @@
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+}
+
+.exercises-grid-2x2 .exercise-start-button {
+  padding: 1rem 1.5rem;
+  font-size: 1.1rem;
 }
 
 .exercise-start-button::before {
@@ -314,6 +342,11 @@
     gap: 1rem;
   }
   
+  .exercises-grid-2x2 {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+  
   .exercise-card-container {
     padding: 0.75rem;
   }
@@ -343,5 +376,10 @@
 @media (max-width: 480px) {
   .exercises-grid {
     grid-template-columns: 1fr;
+  }
+  
+  .exercises-grid-2x2 {
+    grid-template-columns: 1fr;
+    gap: 1rem;
   }
 }

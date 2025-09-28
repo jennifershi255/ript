@@ -116,28 +116,6 @@ const HomeScreen: React.FC = () => {
     </div>
   );
 
-  const renderStatsCard = () => (
-    <div className="stats-card">
-      <h3 className="stats-title">your progress</h3>
-      <div className="stats-row">
-        <div className="stat-item">
-          <div className="stat-value">{analytics?.totalSessions || 0}</div>
-          <div className="stat-label">workouts</div>
-        </div>
-        <div className="stat-item">
-          <div className="stat-value">{analytics?.totalReps || 0}</div>
-          <div className="stat-label">total reps</div>
-        </div>
-        <div className="stat-item">
-          <div className="stat-value">
-            {analytics?.averageFormAccuracy || 0}%
-          </div>
-          <div className="stat-label">Avg Form</div>
-        </div>
-      </div>
-    </div>
-  );
-
   return (
     <div className="home-screen">
       <Navigation />
@@ -154,17 +132,9 @@ const HomeScreen: React.FC = () => {
           <p className="subtitle">ready for your next workout?</p>
         </div>
 
-        {/* Stats Card */}
-        {renderStatsCard()}
-
         {/* Exercise Selection */}
         <div className="exercises-section">
-          <h2 className="section-title">choose your exercise</h2>
-          <p className="section-subtitle">
-            AI-powered form analysis for perfect technique
-          </p>
-
-          <div className="exercises-grid">
+          <div className="exercises-grid-2x2">
             {EXERCISES.map((exercise, index) =>
               renderExerciseCard(exercise, index)
             )}
