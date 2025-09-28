@@ -79,6 +79,7 @@ body, .analytics-screen {
   max-width: 1200px;
   margin: 0 auto;
   padding: 3.25rem 1.5rem 4.25rem;
+  margin-top: 150px;
 }
 
 .analytics-header { text-align: center; margin-bottom: 3rem; }
