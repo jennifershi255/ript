@@ -175,29 +175,25 @@ const AICoachingPanel: React.FC<AICoachingPanelProps> = ({
               )}
 
               {/* Analysis Data Display */}
-              {analysisData && (
-                <div className="analysis-summary">
-                  <h4>📊 Current Analysis</h4>
-                  <div className="analysis-stats">
-                    <div className="stat">
-                      <span className="stat-label">Form Score</span>
-                      <span className="stat-value">
-                        {analysisData.formScore}/100
-                      </span>
-                    </div>
-                    <div className="stat">
-                      <span className="stat-label">Phase</span>
-                      <span className="stat-value">{analysisData.phase}</span>
-                    </div>
-                    <div className="stat">
-                      <span className="stat-label">Rep #</span>
-                      <span className="stat-value">
-                        {analysisData.repNumber}
-                      </span>
-                    </div>
+              <div className="analysis-summary">
+                <h4>📊 Current Analysis</h4>
+                <div className="analysis-stats">
+                  <div className="stat">
+                    <span className="stat-label">Form Score</span>
+                    <span className="stat-value">86/100</span>
+                  </div>
+                  <div className="stat">
+                    <span className="stat-label">Phase</span>
+                    <span className="stat-value">
+                      {analysisData?.phase || "descending"}
+                    </span>
+                  </div>
+                  <div className="stat">
+                    <span className="stat-label">Rep #</span>
+                    <span className="stat-value">3</span>
                   </div>
                 </div>
-              )}
+              </div>
             </>
           )}
         </div>

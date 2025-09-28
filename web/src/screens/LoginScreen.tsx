@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import "./AuthScreens.css";
 
 const LoginScreen: React.FC = () => {
-  const [email, setEmail] = useState("test@example.com");
+  const [email, setEmail] = useState("jennifer255@gmail.com");
   const [password, setPassword] = useState("password123");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");

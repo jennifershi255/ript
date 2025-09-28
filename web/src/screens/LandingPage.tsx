@@ -6,7 +6,7 @@ import "./LandingPage.css";
 
 const LandingPage: React.FC = () => {
   const [showLogin, setShowLogin] = useState(false);
-  const [email, setEmail] = useState("test@example.com");
+  const [email, setEmail] = useState("jennifer255@gmail.com");
   const [password, setPassword] = useState("password123");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -65,7 +65,7 @@ const LandingPage: React.FC = () => {
                 <img
                   src="/full_logo.png"
                   alt="Ript"
-                  style={{ width: "300px" }}
+                  style={{ width: "500px" }}
                 />
               </h1>
             </div>
