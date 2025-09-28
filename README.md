@@ -27,7 +27,8 @@ Ript isn’t about six-packs or PRs. It’s about making fitness feel safe, enco
 **We’re Ript: fitness that flexes for everyone.**
 
 # The Demo.
-[![Check out the product.]](https://youtu.be/j7Nu_Se_hNM)
+[Check out the demo video.](https://youtu.be/j7Nu_Se_hNM)
+[Check out the DevPost.](https://devpost.com/software/ript-9nq3iz)
 
 Built With... 
 express.js, gemini, mediapipe, mongodb, node.js, opencv, react, typescript
