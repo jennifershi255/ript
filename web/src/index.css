@@ -1,25 +1,43 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap');
+
 :root {
-  --bg-0: #191717;       /* solid dark gray background */
-  --ink: #e6edf3;        /* text */
+  /* Consistent spacing and layout */
+  --content-pad: 24px;
+  --label-w: 36px;
+  --grid-gap: 24px;
+
+  /* Main color palette */
+  --bg-main: #191717;
+  --bg-accent: #242121;
+  --text: #eaf2ff;
   --muted: #97a3b6;
   --accent: #83EBFC;
   --accent-2: #83EBFC;
   --ok: #f59e0b;
   --bad: #ef4444;
-  --radius: 22px;
-  --shadow-lg: 0 20px 60px rgba(3, 8, 20, 0.35);
+
+  /* Card system */
+  --card-bg: #1f1f20;
+  --card-stroke: rgba(255,255,255,.08);
+  
+  /* Legacy variables for compatibility */
+  --bg-0: #191717;
+  --ink: #eaf2ff;
   --bg-1: #242121;
+  --radius: 16px;
+  --shadow-lg: 0 20px 60px rgba(3, 8, 20, 0.35);
 }
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: 'JetBrains Mono', monospace;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: var(--bg-0);
-  color: var(--ink);
+  background: radial-gradient(1000px 700px at 30% 0%, var(--bg-accent), transparent 60%),
+              radial-gradient(900px 600px at 80% 20%, #1e1c1c, transparent 55%),
+              var(--bg-main);
+  color: var(--text);
+  min-height: 100vh;
 }
 
 code {

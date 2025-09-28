@@ -3,13 +3,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: 
-    radial-gradient(circle at 20% 80%, rgba(0, 123, 255, 0.05) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(102, 126, 234, 0.04) 0%, transparent 50%),
-    radial-gradient(circle at 40% 40%, rgba(138, 43, 226, 0.03) 0%, transparent 50%),
-    #191717;
+  background: radial-gradient(1000px 700px at 30% 0%, var(--bg-accent), transparent 60%),
+              radial-gradient(900px 600px at 80% 20%, #1e1c1c, transparent 55%),
+              var(--bg-main);
   padding: 2rem;
   position: relative;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text);
 }
 
 .auth-container::before {
@@ -65,41 +65,46 @@
 
 .auth-input {
   padding: 1rem;
-  border: 1px solid #333;
-  border-radius: 8px;
+  border: 1px solid var(--card-stroke);
+  border-radius: 12px;
   font-size: 1rem;
-  background: rgba(255, 255, 255, 0.05);
-  color: #ffffff;
+  font-family: 'JetBrains Mono', monospace;
+  background: rgba(31,31,32,0.9);
+  color: var(--text);
   transition: all 0.2s ease;
   backdrop-filter: blur(10px);
 }
 
 .auth-input:focus {
   outline: none;
-  border-color: #00ffff07;
-  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--accent);
+  background: rgba(31,31,32,0.95);
+  box-shadow: 0 0 0 2px rgba(131, 235, 252, 0.1);
 }
 
 .auth-input::placeholder {
-  color: #888;
+  color: var(--muted);
 }
 
 .auth-button {
-  background: #00ffff07;
-  color: white;
+  background: var(--accent);
+  color: var(--bg-main);
   border: none;
   padding: 1rem;
-  border-radius: 8px;
+  border-radius: 12px;
   font-size: 1rem;
-  font-weight: 500;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
   cursor: pointer;
   transition: all 0.2s ease;
   margin-top: 0.5rem;
+  text-transform: lowercase;
 }
 
 .auth-button:hover:not(:disabled) {
-  background: #00ffff07;
+  background: var(--accent);
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(131, 235, 252, 0.3);
 }
 
 .auth-button:disabled {

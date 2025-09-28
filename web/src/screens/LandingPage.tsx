@@ -62,7 +62,11 @@ const LandingPage: React.FC = () => {
           <>
             <div className="logo-section">
               <h1>
-                <img src="/logo.png" alt="Ript" style={{ width: "300px" }} />
+                <img
+                  src="/full_logo.png"
+                  alt="Ript"
+                  style={{ width: "300px" }}
+                />
               </h1>
             </div>
             <div className="sign-in-section">
