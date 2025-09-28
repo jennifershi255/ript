@@ -29,17 +29,42 @@ function AppContent() {
       <div className="App">
         <Routes>
           {/* Landing Page - Show when not authenticated */}
-          <Route path="/" element={<LandingPage />} />
+          <Route
+            path="/"
+            element={
+              !isAuthenticated ? <LandingPage /> : <Navigate to="/home" />
+            }
+          />
 
-          {/* Protected Routes */}
-          <Route path="/home" element={<HomeScreen />} />
-          <Route path="/workout/:exercise" element={<WorkoutScreen />} />
-          <Route path="/camera" element={<CameraScreen />} />
-          <Route path="/analytics" element={<AnalyticsScreen />} />
-          <Route path="/profile" element={<ProfileScreen />} />
+          {/* Protected Routes - Only accessible when authenticated */}
+          <Route
+            path="/home"
+            element={isAuthenticated ? <HomeScreen /> : <Navigate to="/" />}
+          />
+          <Route
+            path="/workout/:exercise"
+            element={isAuthenticated ? <WorkoutScreen /> : <Navigate to="/" />}
+          />
+          <Route
+            path="/camera"
+            element={isAuthenticated ? <CameraScreen /> : <Navigate to="/" />}
+          />
+          <Route
+            path="/analytics"
+            element={
+              isAuthenticated ? <AnalyticsScreen /> : <Navigate to="/" />
+            }
+          />
+          <Route
+            path="/profile"
+            element={isAuthenticated ? <ProfileScreen /> : <Navigate to="/" />}
+          />
 
           {/* Catch all route */}
-          <Route path="*" element={<Navigate to="/home" />} />
+          <Route
+            path="*"
+            element={<Navigate to={isAuthenticated ? "/home" : "/"} />}
+          />
         </Routes>
       </div>
     </Router>

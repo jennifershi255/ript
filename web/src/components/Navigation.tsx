@@ -45,9 +45,6 @@ const Navigation: React.FC = () => {
       </div>
 
       <div className="nav-user">
-        <span className="user-name">
-          {user?.profile?.firstName || user?.username}
-        </span>
         <button onClick={handleLogout} className="logout-button">
           Logout
         </button>

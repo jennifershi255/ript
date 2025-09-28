@@ -20,7 +20,7 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: process.env.NODE_ENV === 'production' ? false : ['http://localhost:3000', 'http://localhost:19006', 'http://10.36.139.76:8081', 'exp://10.36.139.76:8081'],
+    origin: process.env.NODE_ENV === 'production' ? false : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:19006', 'http://10.36.139.76:8081', 'exp://10.36.139.76:8081'],
     methods: ['GET', 'POST']
   }
 });
@@ -37,7 +37,7 @@ const limiter = rateLimit({
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:19006', 'http://10.36.139.76:8081', 'exp://10.36.139.76:8081'],
+  origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:19006', 'http://10.36.139.76:8081', 'exp://10.36.139.76:8081'],
   credentials: true
 }));
 app.use(limiter);

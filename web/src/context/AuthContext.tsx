@@ -286,6 +286,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       localStorage.removeItem("token");
       authAPI.removeAuthToken();
       dispatch({ type: AUTH_ACTIONS.LOGOUT });
+
+      // Force navigation to landing page after logout
+      window.location.href = "/";
     } catch (error) {
       console.error("Logout error:", error);
     }

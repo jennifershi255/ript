@@ -1,15 +1,16 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "./AuthScreens.css";
 
 const LoginScreen: React.FC = () => {
-  const [email, setEmail] = useState("demo@aiworkout.com");
-  const [password, setPassword] = useState("demo123");
+  const [email, setEmail] = useState("test@example.com");
+  const [password, setPassword] = useState("password123");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
   const { login } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,7 +19,10 @@ const LoginScreen: React.FC = () => {
 
     try {
       const result = await login(email, password);
-      if (!result.success) {
+      if (result.success) {
+        // Navigate to home page after successful login
+        navigate("/home");
+      } else {
         setError(result.error || "Login failed");
       }
     } catch (err) {

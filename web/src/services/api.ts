@@ -46,7 +46,7 @@ const getBaseURL = () => {
 const BASE_URL = getBaseURL();
 
 // Flag to determine if we should use mock API
-const USE_MOCK_API = true; // Set to true temporarily to bypass authentication
+const USE_MOCK_API = false; // Set to false when backend is accessible
 
 // Create axios instance
 const api = axios.create({

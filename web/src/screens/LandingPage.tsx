@@ -6,8 +6,8 @@ import "./LandingPage.css";
 
 const LandingPage: React.FC = () => {
   const [showLogin, setShowLogin] = useState(false);
-  const [email, setEmail] = useState("demo@aiworkout.com");
-  const [password, setPassword] = useState("demo123");
+  const [email, setEmail] = useState("test@example.com");
+  const [password, setPassword] = useState("password123");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -105,9 +105,13 @@ const LandingPage: React.FC = () => {
                 className="auth-input"
               />
 
-              <Link to="/home" className="auth-button">
-                sign in
-              </Link>
+              <button
+                type="submit"
+                className="auth-button"
+                disabled={isLoading}
+              >
+                {isLoading ? "signing in..." : "sign in"}
+              </button>
             </form>
 
             <div className="auth-footer">
