@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useWorkout } from "../context/WorkoutContext";
 import { useAuth } from "../context/AuthContext";
 import Navigation from "../components/Navigation";
+import AICoachingPanel from "../components/AICoachingPanel";
 import {
   PoseDetector,
   SquatAnalysis,
@@ -46,6 +47,7 @@ const WorkoutScreen: React.FC = () => {
   const [formScoreCount, setFormScoreCount] = useState(0);
   const [stableFeedback, setStableFeedback] = useState<string[]>([]);
   const [lastBottomTime, setLastBottomTime] = useState<number>(0);
+  const [showAICoaching, setShowAICoaching] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const feedbackTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -843,6 +845,12 @@ const WorkoutScreen: React.FC = () => {
           >
             End Workout
           </button>
+          <button
+            className="control-button ai-coach"
+            onClick={() => setShowAICoaching(true)}
+          >
+            🤖 AI Coach
+          </button>
           {!isRecording ? (
             <button
               className="control-button primary"
@@ -860,6 +868,14 @@ const WorkoutScreen: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* AI Coaching Panel */}
+      <AICoachingPanel
+        exercise={exercise || "squat"}
+        analysisData={currentAnalysis}
+        isVisible={showAICoaching}
+        onClose={() => setShowAICoaching(false)}
+      />
     </div>
   );
 };

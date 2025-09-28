@@ -309,7 +309,7 @@ export const workoutAPI = {
 // Analysis API
 export const analysisAPI = {
   // Analyze pose data
-  analyzePose: async (poseData: any, exercise: string, repNumber: number) => {
+  analyzePose: async (poseData: any, exercise: string, repNumber: number, useAI: boolean = false) => {
     if (USE_MOCK_API) {
       return await mockAnalysisAPI.analyzePose(poseData, exercise, repNumber);
     }
@@ -318,7 +318,8 @@ export const analysisAPI = {
       const response = await api.post('/analysis/pose', {
         poseData,
         exercise,
-        repNumber
+        repNumber,
+        useAI
       });
       return response;
     } catch (error) {
@@ -360,6 +361,41 @@ export const analysisAPI = {
         poseSequence,
         exercise
       });
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Get AI-powered workout recommendations
+  getAIRecommendations: async (recentSessions: any[] = [], goals: string[] = []): Promise<any> => {
+    try {
+      const response = await api.post('/analysis/ai-recommendations', {
+        recentSessions,
+        goals
+      });
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Get AI session analysis
+  getAISessionAnalysis: async (sessionData: any): Promise<any> => {
+    try {
+      const response = await api.post('/analysis/ai-session-analysis', {
+        sessionData
+      });
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Get personalized coaching tips
+  getCoachingTips: async (exercise: string): Promise<any> => {
+    try {
+      const response = await api.get(`/analysis/coaching-tips/${exercise}`);
       return response;
     } catch (error) {
       throw error;

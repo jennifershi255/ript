@@ -383,6 +383,20 @@
   border: 2px solid var(--bad);
 }
 
+.control-button.ai-coach {
+  background: linear-gradient(135deg, var(--accent), #4A90E2);
+  color: var(--bg-main);
+  border: 2px solid var(--accent);
+  font-size: 1rem;
+  padding: 1rem 2rem;
+  text-transform: lowercase;
+}
+
+.control-button.ai-coach:hover {
+  background: linear-gradient(135deg, #4A90E2, var(--accent));
+  box-shadow: 0 12px 32px rgba(131, 235, 252, 0.3);
+}
+
 .control-button:hover {
   transform: translateY(-4px);
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
