@@ -484,6 +484,24 @@ const WorkoutScreen: React.FC = () => {
     // Update current analysis state for real-time response
     setCurrentAnalysis(analysis);
 
+    // Track form scores for cumulative average calculation - DO THIS ALWAYS for real-time accuracy
+    if (analysis.formScore > 0) {
+      console.log(
+        `🎯 Form Score Update: ${analysis.formScore}% (Phase: ${analysis.phase})`
+      );
+      setFormScoreHistory((prev) => {
+        const newHistory = [...prev, analysis.formScore];
+        // Keep only last 10 scores for display purposes
+        const trimmedHistory = newHistory.slice(-10);
+        console.log(`📊 Form Score History: [${trimmedHistory.join(", ")}]`);
+        return trimmedHistory;
+      });
+
+      // Update cumulative totals
+      setTotalFormScoreSum((prev) => prev + analysis.formScore);
+      setFormScoreCount((prev) => prev + 1);
+    }
+
     // Stabilize feedback messages - only update every 2 seconds to prevent rapid changes
     if (feedbackTimeoutRef.current) {
       // Don't clear existing timeout - let it complete for stability
@@ -497,20 +515,6 @@ const WorkoutScreen: React.FC = () => {
     feedbackTimeoutRef.current = setTimeout(() => {
       feedbackTimeoutRef.current = null;
     }, 2000); // 2 second minimum between feedback updates
-
-    // Track form scores for cumulative average calculation
-    if (analysis.formScore > 0) {
-      console.log(`Adding form score: ${analysis.formScore}`);
-      setFormScoreHistory((prev) => {
-        const newHistory = [...prev, analysis.formScore];
-        // Keep only last 10 scores for display purposes
-        return newHistory.slice(-10);
-      });
-
-      // Update cumulative totals
-      setTotalFormScoreSum((prev) => prev + analysis.formScore);
-      setFormScoreCount((prev) => prev + 1);
-    }
 
     // Log feedback to workout context
     if (analysis.feedback && analysis.feedback.length > 0) {
@@ -552,10 +556,24 @@ const WorkoutScreen: React.FC = () => {
     }
   };
 
-  // Helper function to calculate cumulative average form score
+  // Helper function to calculate current form score (rolling average of recent scores)
   const getCumulativeFormScore = (): number => {
-    if (formScoreCount === 0) return 0;
-    return Math.round(totalFormScoreSum / formScoreCount);
+    if (formScoreHistory.length === 0) return 0;
+
+    // Use rolling average of last 10 scores for more responsive feedback
+    const recentScores = formScoreHistory.slice(-10);
+    const average =
+      recentScores.reduce((sum, score) => sum + score, 0) / recentScores.length;
+    const result = Math.round(average);
+
+    // Debug logging (only log occasionally to avoid spam)
+    if (formScoreHistory.length % 10 === 0) {
+      console.log(
+        `📈 Current Form Average: ${result}% (from ${recentScores.length} recent scores)`
+      );
+    }
+
+    return result;
   };
 
   // Toggle pose overlay visibility
@@ -680,6 +698,33 @@ const WorkoutScreen: React.FC = () => {
                       showPoseOverlay ? "visible" : "hidden"
                     }`}
                   />
+
+                  {/* Real-time form score indicator */}
+                  {currentAnalysis && currentAnalysis.formScore > 0 && (
+                    <div
+                      className="current-form-score"
+                      style={{
+                        position: "absolute",
+                        top: "10px",
+                        right: "10px",
+                        background: "rgba(0,0,0,0.8)",
+                        color:
+                          currentAnalysis.formScore >= 80
+                            ? "#10b981"
+                            : currentAnalysis.formScore >= 60
+                            ? "#f59e0b"
+                            : "#ef4444",
+                        padding: "8px 12px",
+                        borderRadius: "8px",
+                        fontSize: "1.2rem",
+                        fontWeight: "bold",
+                        zIndex: 10,
+                        border: "2px solid rgba(255,255,255,0.2)",
+                      }}
+                    >
+                      {currentAnalysis.formScore}%
+                    </div>
+                  )}
                 </div>
                 <div className="camera-controls">
                   <button
@@ -831,8 +876,28 @@ const WorkoutScreen: React.FC = () => {
                 <div className="stat-label">Reps</div>
               </div>
               <div className="stat-box">
-                <div className="stat-number">{getCumulativeFormScore()}%</div>
+                <div
+                  className="stat-number"
+                  style={{
+                    color:
+                      getCumulativeFormScore() >= 80
+                        ? "#10b981"
+                        : getCumulativeFormScore() >= 60
+                        ? "#f59e0b"
+                        : "#ef4444",
+                  }}
+                >
+                  {getCumulativeFormScore()}%
+                </div>
                 <div className="stat-label">Form Score</div>
+                {formScoreHistory.length > 0 && (
+                  <div
+                    className="stat-detail"
+                    style={{ fontSize: "0.7rem", opacity: 0.7 }}
+                  >
+                    Latest: {formScoreHistory[formScoreHistory.length - 1]}%
+                  </div>
+                )}
               </div>
             </div>
           </div>

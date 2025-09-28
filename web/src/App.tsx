@@ -41,10 +41,7 @@ function AppContent() {
             path="/home"
             element={isAuthenticated ? <HomeScreen /> : <Navigate to="/" />}
           />
-          <Route
-            path="/workout/:exercise"
-            element={isAuthenticated ? <WorkoutScreen /> : <Navigate to="/" />}
-          />
+          <Route path="/workout/:exercise" element={<WorkoutScreen />} />
           <Route
             path="/camera"
             element={isAuthenticated ? <CameraScreen /> : <Navigate to="/" />}
