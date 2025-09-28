@@ -171,6 +171,14 @@
 .exercises-grid-2x2 .exercise-name {
   font-size: 1.6rem;
   margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.exercises-grid-2x2 .exercise-name img {
+  width: 32px;
+  height: 32px;
 }
 
 .exercise-description {
