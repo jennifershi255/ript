@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { useWorkout } from "../context/WorkoutContext";
 import Navigation from "../components/Navigation";
 import "./HomeScreen.css";
+import Aurora from "../components/Aurora";
 
 const EXERCISES = [
   {
@@ -140,7 +141,12 @@ const HomeScreen: React.FC = () => {
   return (
     <div className="home-screen">
       <Navigation />
-
+      <Aurora
+        colorStops={["#83EBFC", "#B19EEF", "#5227FF"]}
+        blend={0.5}
+        amplitude={1.0}
+        speed={0.5}
+      />
       <div className="home-content">
         {/* Header */}
         <div className="home-header">

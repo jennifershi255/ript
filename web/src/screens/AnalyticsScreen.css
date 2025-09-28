@@ -54,7 +54,6 @@ body, .analytics-screen {
 
 /* Foreground content sits above grid */
 .analytics-content{ position: relative; z-index: 1; }
-.navigation, nav, header{ position: relative; z-index: 1; }
 
 .analytics-card {
   background: var(--bg-0);
