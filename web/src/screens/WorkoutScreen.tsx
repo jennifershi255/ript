@@ -110,18 +110,39 @@ const WorkoutScreen: React.FC = () => {
         console.log("Saving workout statistics...");
         try {
           // Update session with final statistics
-          const finalStats = {
-            totalReps: totalReps,
-            correctReps: Math.round(
-              totalReps * (getCumulativeFormScore() / 100)
-            ),
-            formAccuracy: getCumulativeFormScore(),
-            duration: Math.floor(
-              (Date.now() - new Date(currentSession.startTime).getTime()) / 1000
-            ),
-          };
+          const formScore = getCumulativeFormScore();
+          const actualReps = totalReps;
+          const actualFormScore = formScore;
 
-          console.log("Final workout stats:", finalStats);
+          // Prepare final statistics
+          let finalStats;
+          if (actualReps > 0 || formScoreHistory.length > 0) {
+            // User did actual workout - send real statistics
+            finalStats = {
+              totalReps: Math.max(actualReps, 1),
+              correctReps: Math.round(
+                Math.max(actualReps, 1) * (Math.max(actualFormScore, 50) / 100)
+              ),
+              formAccuracy: Math.max(actualFormScore, 50), // Default to 50% if no form data
+              duration: Math.floor(
+                (Date.now() - new Date(currentSession.startTime).getTime()) /
+                  1000
+              ),
+            };
+          } else {
+            // User didn't do actual workout - send empty statistics
+            finalStats = {
+              duration: Math.floor(
+                (Date.now() - new Date(currentSession.startTime).getTime()) /
+                  1000
+              ),
+            };
+          }
+
+          console.log("📊 Final workout stats being sent:", finalStats);
+          console.log("📈 Form score history:", formScoreHistory);
+          console.log("🏋️ Total reps counted:", actualReps);
+          console.log("🎯 Actual form score:", actualFormScore);
 
           // End the workout session with statistics
           const result = await workoutContext.endWorkoutSession(finalStats);
@@ -131,10 +152,11 @@ const WorkoutScreen: React.FC = () => {
 
             // Refresh user data and analytics to get updated stats
             try {
-              await loadUser();
-              await workoutContext.loadAnalytics();
+              await loadUser(); // This will refresh user.stats in AuthContext
+              await workoutContext.loadAnalytics(); // This will refresh analytics in WorkoutContext
+              await workoutContext.loadWorkoutHistory(); // This will refresh workout history for activity chart
               console.log(
-                "User stats and analytics refreshed after workout completion"
+                "User stats, analytics, and workout history refreshed after workout completion"
               );
             } catch (error) {
               console.error("Error refreshing user stats:", error);

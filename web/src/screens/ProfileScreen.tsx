@@ -68,7 +68,9 @@ const ProfileScreen: React.FC = () => {
 
       <div className="profile-content">
         <div className="profile-header">
-          <h1>welcome {user?.profile?.firstName || user?.username || "athlete"}</h1>
+          <h1>
+            welcome {user?.profile?.firstName || user?.username || "athlete"}
+          </h1>
           <p>manage your account and preferences</p>
         </div>
 
@@ -237,7 +239,7 @@ const ProfileScreen: React.FC = () => {
               <div className="stat-item">
                 <span className="stat-label">average form</span>
                 <span className="stat-value">
-                  {user?.stats?.averageFormAccuracy || 0}%
+                  {user?.stats?.averageFormAccuracy.toFixed(2) || 0}%
                 </span>
               </div>
               <div className="stat-item">

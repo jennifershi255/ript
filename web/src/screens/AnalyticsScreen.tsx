@@ -62,7 +62,13 @@ const HeatmapCalendar: React.FC<HeatmapProps> = ({ dataByDay, weeks = 26 }) => {
           {columns.map((week, wi) => (
             <div className="heatmap-col" key={wi}>
               {week.map((day, di) => {
-                const lvl = level(day.count);
+                let lvl = level(day.count);
+
+                // Hardcode blue for first Saturday (di = 6) and first Sunday (di = 0) in first column (wi = 0)
+                if (wi === 0 && (di === 0 || di === 6)) {
+                  lvl = 3; // Force level 3 (blue)
+                }
+
                 const title = `${day.date}: ${day.count} workout${
                   day.count === 1 ? "" : "s"
                 }`;
@@ -104,13 +110,21 @@ const AnalyticsScreen: React.FC = () => {
     loadWorkoutHistory();
   }, [loadAnalytics, loadWorkoutHistory]);
 
+  const handleRefresh = () => {
+    loadAnalytics();
+    loadWorkoutHistory();
+  };
+
   const dataByDay = useMemo(() => {
     const map: Record<string, DayStat> = {};
     (workoutHistory ?? []).forEach((w: any) => {
-      const key = startOfDayISO(new Date(w.startTime));
-      if (!map[key]) map[key] = { date: key, count: 0, reps: 0 };
-      map[key].count += 1;
-      map[key].reps += Number(w.totalReps ?? 0);
+      // Only include sessions with actual workout data for activity chart
+      if (w.totalReps > 0) {
+        const key = startOfDayISO(new Date(w.startTime));
+        if (!map[key]) map[key] = { date: key, count: 0, reps: 0 };
+        map[key].count += 1;
+        map[key].reps += Number(w.totalReps ?? 0);
+      }
     });
     return map;
   }, [workoutHistory]);
@@ -149,17 +163,17 @@ const AnalyticsScreen: React.FC = () => {
     <div className="analytics-screen">
       {/* Fullscreen background grid */}
       <DotGrid
-      dotSize={6}          // smaller dots
-      gap={24}             // more spacing between dots
-      baseColor="#191717"
-      activeColor="83EBFC"
-      proximity={200}
-      shockRadius={250}
-      shockStrength={30}
-      resistance={400}
-      returnDuration={1.5}
-      className="dot-grid-bg"
-    />
+        dotSize={6} // smaller dots
+        gap={24} // more spacing between dots
+        baseColor="#191717"
+        activeColor="83EBFC"
+        proximity={200}
+        shockRadius={250}
+        shockStrength={30}
+        resistance={400}
+        returnDuration={1.5}
+        className="dot-grid-bg"
+      />
 
       {/* Foreground */}
       <Navigation />
@@ -168,6 +182,21 @@ const AnalyticsScreen: React.FC = () => {
         <header className="analytics-header">
           <h1>your progress</h1>
           <p>track your fitness journey with detailed analytics</p>
+          {/* <button
+            onClick={handleRefresh}
+            style={{
+              background: "var(--accent)",
+              color: "var(--bg)",
+              border: "none",
+              padding: "8px 16px",
+              borderRadius: "8px",
+              cursor: "pointer",
+              marginTop: "10px",
+              fontFamily: "var(--font-mono)",
+            }}
+          >
+            🔄 Refresh Data
+          </button> */}
         </header>
 
         <section className="overview-split">

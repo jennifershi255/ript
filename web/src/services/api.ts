@@ -303,6 +303,52 @@ export const workoutAPI = {
     } catch (error) {
       throw error;
     }
+  },
+
+  // Fix existing sessions with missing statistics (temporary)
+  fixSessions: async () => {
+    if (USE_MOCK_API) {
+      return { success: true, fixedCount: 0 };
+    }
+    
+    try {
+      const response = await api.post('/workouts/fix-sessions');
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Get activity data for calendar/grid view
+  getActivity: async (days: number = 365) => {
+    if (USE_MOCK_API) {
+      // Return mock activity data
+      const mockActivity = [];
+      const today = new Date();
+      for (let i = 0; i < 365; i++) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        const intensity = Math.random() > 0.7 ? Math.floor(Math.random() * 4) : 0;
+        if (intensity > 0) {
+          mockActivity.push({
+            date: date.toISOString().split('T')[0],
+            workouts: intensity,
+            totalReps: intensity * 10,
+            exercises: ['squat'],
+            avgFormAccuracy: 70 + Math.random() * 20,
+            intensity
+          });
+        }
+      }
+      return { success: true, activity: mockActivity };
+    }
+    
+    try {
+      const response = await api.get(`/workouts/analytics/activity?days=${days}`);
+      return response;
+    } catch (error) {
+      throw error;
+    }
   }
 };
 
