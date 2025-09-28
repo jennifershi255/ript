@@ -137,5 +137,4 @@ buck-out/
 ehthumbs.db
 Thumbs.db
 
-# To remove the other markdown files
-*.md
+
