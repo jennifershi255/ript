@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import LightRays from "../components/LightRays";
 import "./LandingPage.css";
@@ -12,6 +12,7 @@ const LandingPage: React.FC = () => {
   const [error, setError] = useState("");
 
   const { login } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,7 +21,10 @@ const LandingPage: React.FC = () => {
 
     try {
       const result = await login(email, password);
-      if (!result.success) {
+      if (result.success) {
+        // Navigate to home page after successful login
+        navigate("/home");
+      } else {
         setError(result.error || "Login failed");
       }
     } catch (err) {
@@ -45,23 +49,25 @@ const LandingPage: React.FC = () => {
         distortion={0.05}
         className="light-rays"
       />
-      
+
       {/* Particle System */}
       <div className="particles">
         {[...Array(20)].map((_, i) => (
           <div key={i} className={`particle particle-${i + 1}`}></div>
         ))}
       </div>
-      
-      <div className={`landing-content ${showLogin ? 'login-mode' : ''}`}>
+
+      <div className={`landing-content ${showLogin ? "login-mode" : ""}`}>
         {!showLogin ? (
           <>
             <div className="logo-section">
-              <h1><img src="/logo.png" alt="Ript" style={{ width: "300px" }} /></h1>
+              <h1>
+                <img src="/logo.png" alt="Ript" style={{ width: "300px" }} />
+              </h1>
             </div>
             <div className="sign-in-section">
-              <button 
-                onClick={() => setShowLogin(true)} 
+              <button
+                onClick={() => setShowLogin(true)}
                 className="sign-in-text"
               >
                 sign in →
@@ -71,8 +77,8 @@ const LandingPage: React.FC = () => {
         ) : (
           <>
             <div className="back-section">
-              <button 
-                onClick={() => setShowLogin(false)} 
+              <button
+                onClick={() => setShowLogin(false)}
                 className="back-button"
               >
                 ← back
@@ -99,7 +105,7 @@ const LandingPage: React.FC = () => {
                 className="auth-input"
               />
 
-              <Link to="/login" className="auth-button">
+              <Link to="/home" className="auth-button">
                 sign in
               </Link>
             </form>

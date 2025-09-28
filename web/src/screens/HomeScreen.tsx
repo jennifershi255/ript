@@ -4,9 +4,6 @@ import { useAuth } from "../context/AuthContext";
 import { useWorkout } from "../context/WorkoutContext";
 import Navigation from "../components/Navigation";
 import "./HomeScreen.css";
-import Aurora from "../components/Aurora";
-
-
 
 const EXERCISES = [
   {
@@ -45,13 +42,12 @@ const EXERCISES = [
 
 const HomeScreen: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const { analytics, loadAnalytics, startWorkoutSession } = useWorkout();
   const [isStarting, setIsStarting] = useState<string | null>(null);
 
   useEffect(() => {
     loadAnalytics();
-  }, []);
+  }, [loadAnalytics]);
 
   const handleStartWorkout = async (exercise: any) => {
     try {
@@ -143,36 +139,25 @@ const HomeScreen: React.FC = () => {
 
   return (
     <div className="home-screen">
-      {/* Aurora Background */}
-      <Aurora
-        colorStops={["#83EBFC", "#B19EEF", "#5227FF"]}
-        blend={0.5}
-        amplitude={1.0}
-        speed={0.5}
-      />
-  
-      {/* Foreground content */}
       <Navigation />
-  
+
       <div className="home-content">
         {/* Header */}
         <div className="home-header">
-          <h1 className="greeting">
-            welcome to ript!
-          </h1>
+          <h1 className="greeting">welcome to ript!</h1>
           <p className="subtitle">ready for your next workout?</p>
         </div>
-  
+
         {/* Stats Card */}
         {renderStatsCard()}
-  
+
         {/* Exercise Selection */}
         <div className="exercises-section">
           <h2 className="section-title">choose your exercise</h2>
           <p className="section-subtitle">
             AI-powered form analysis for perfect technique
           </p>
-  
+
           <div className="exercises-grid">
             {EXERCISES.map((exercise, index) =>
               renderExerciseCard(exercise, index)

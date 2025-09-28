@@ -222,6 +222,7 @@ body, .analytics-screen {
     grid-template-columns: 1fr;
   align-items: center; /* centers the header with the grid below */
 }
+}
 
 .overview-right h3 {
   margin-bottom: 1rem;

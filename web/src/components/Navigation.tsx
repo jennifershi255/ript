@@ -20,12 +20,14 @@ const Navigation: React.FC = () => {
   return (
     <nav className="navigation">
       <div className="nav-brand">
-      <img src={require("./logo.png")} alt="Ript" className="brand-logo" />
-
+        <img src={require("./logo.png")} alt="Ript" className="brand-logo" />
       </div>
 
       <div className="nav-links">
-        <Link to="/" className={`nav-link ${isActive("/") ? "active" : ""}`}>
+        <Link
+          to="/home"
+          className={`nav-link ${isActive("/home") ? "active" : ""}`}
+        >
           Home
         </Link>
         <Link

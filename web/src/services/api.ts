@@ -38,7 +38,7 @@ interface AnalyticsResponse {
 const getBaseURL = () => {
   if (process.env.NODE_ENV === 'development') {
     // Development backend URL
-    return 'http://localhost:3001/api';
+    return 'http://localhost:3002/api';
   }
   return 'https://your-production-api.com/api';
 };
@@ -46,7 +46,7 @@ const getBaseURL = () => {
 const BASE_URL = getBaseURL();
 
 // Flag to determine if we should use mock API
-const USE_MOCK_API = false; // Set to false when backend is accessible
+const USE_MOCK_API = true; // Set to true temporarily to bypass authentication
 
 // Create axios instance
 const api = axios.create({
