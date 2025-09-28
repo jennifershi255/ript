@@ -1,0 +1,292 @@
+.ai-coaching-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.ai-coaching-panel {
+  background: rgba(31,31,32,0.95);
+  border: 1px solid var(--card-stroke);
+  border-radius: 16px;
+  max-width: 500px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text);
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.coaching-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem 1.5rem 1rem;
+  border-bottom: 1px solid var(--card-stroke);
+}
+
+.coaching-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.ai-icon {
+  font-size: 1.5rem;
+}
+
+.coaching-title h3 {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-transform: lowercase;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.close-button:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.coaching-content {
+  padding: 1.5rem;
+}
+
+/* Loading State */
+.loading-state {
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--card-stroke);
+  border-top: 3px solid var(--accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Error State */
+.error-state {
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.error-message {
+  color: var(--bad);
+  margin-bottom: 1rem;
+}
+
+.retry-button {
+  background: var(--accent);
+  color: var(--bg-main);
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.retry-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(131, 235, 252, 0.3);
+}
+
+/* Content Sections */
+.feedback-section,
+.cues-section,
+.encouragement-section,
+.next-steps-section,
+.analysis-summary {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.section-header h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  flex: 1;
+}
+
+.priority-icon {
+  font-size: 1.1rem;
+}
+
+.form-rating {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.primary-feedback {
+  margin: 0;
+  line-height: 1.5;
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+/* Technical Cues */
+.technical-cues {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.cue-item {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.cue-item:last-child {
+  border-bottom: none;
+}
+
+.cue-item::before {
+  content: '→';
+  color: var(--accent);
+  margin-right: 0.5rem;
+  font-weight: bold;
+}
+
+/* Encouragement */
+.encouragement {
+  margin: 0;
+  font-style: italic;
+  color: var(--ok);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+/* Next Steps */
+.next-steps {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+/* Analysis Summary */
+.analysis-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+
+.stat {
+  text-align: center;
+  padding: 0.75rem 0.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+}
+
+.stat-label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-bottom: 0.25rem;
+  text-transform: lowercase;
+}
+
+.stat-value {
+  display: block;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+/* Footer */
+.coaching-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--card-stroke);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.ai-disclaimer {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.4;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .ai-coaching-overlay {
+    padding: 0.5rem;
+  }
+  
+  .ai-coaching-panel {
+    max-height: 90vh;
+  }
+  
+  .coaching-header,
+  .coaching-content,
+  .coaching-footer {
+    padding: 1rem;
+  }
+  
+  .analysis-stats {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+  
+  .stat {
+    padding: 0.5rem;
+  }
+}

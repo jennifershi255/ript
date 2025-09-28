@@ -9,8 +9,15 @@ const router = express.Router();
 // Generate JWT Token
 const generateToken = (id) => {
   const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
+  
+  // For development, use a very long expiration (365 days)
+  // For production, you should use shorter expiration times
+  const expiration = process.env.NODE_ENV === 'production' 
+    ? (process.env.JWT_EXPIRE || '7d')
+    : '365d'; // 1 year for development
+  
   return jwt.sign({ id }, JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRE || '7d'
+    expiresIn: expiration
   });
 };
 
@@ -141,6 +148,71 @@ router.post('/login', [
     res.status(500).json({
       success: false,
       message: 'Server error during login'
+    });
+  }
+});
+
+// @desc    Refresh JWT token
+// @route   POST /api/auth/refresh
+// @access  Private
+router.post('/refresh', async (req, res) => {
+  try {
+    // Get token from header
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: 'No token, authorization denied'
+      });
+    }
+
+    // Verify token (even if expired, we can still decode the user ID)
+    const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
+    let decoded;
+    
+    try {
+      decoded = jwt.verify(token, JWT_SECRET);
+    } catch (error) {
+      // If token is expired, we can still decode it to get the user ID
+      if (error.name === 'TokenExpiredError') {
+        decoded = jwt.decode(token);
+      } else {
+        throw error;
+      }
+    }
+
+    const user = await User.findById(decoded.id);
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Generate new token
+    const newToken = generateToken(user._id);
+
+    logger.info(`Token refreshed for user: ${user.email}`);
+
+    res.status(200).json({
+      success: true,
+      token: newToken,
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        profile: user.profile,
+        stats: user.stats
+      }
+    });
+
+  } catch (error) {
+    logger.error('Token refresh error:', error);
+    res.status(401).json({
+      success: false,
+      message: 'Token refresh failed'
     });
   }
 });

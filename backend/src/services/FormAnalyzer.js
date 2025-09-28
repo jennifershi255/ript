@@ -1,9 +1,11 @@
 const logger = require('../utils/logger');
+const AICoach = require('./AICoach');
 
 class FormAnalyzer {
   constructor(exercise) {
     this.exercise = exercise;
     this.exerciseRules = this.getExerciseRules(exercise);
+    this.aiCoach = new AICoach();
   }
 
   // Calculate angle between three points
@@ -123,8 +125,43 @@ class FormAnalyzer {
       feedback: feedback.messages,
       corrections: feedback.corrections,
       formScore: feedback.score,
-      isGoodForm: feedback.score >= 70
+      isGoodForm: feedback.score >= 70,
+      errors: feedback.errors || []
     };
+  }
+
+  // AI-Enhanced pose analysis with personalized coaching
+  async analyzeWithAI(poseData, userProfile, repNumber = 0) {
+    try {
+      // Get basic analysis first
+      const basicAnalysis = this.analyzePose(poseData, repNumber);
+      
+      // Generate AI coaching feedback
+      const aiCoaching = await this.aiCoach.generateCoachingFeedback(
+        basicAnalysis, 
+        userProfile, 
+        this.exercise
+      );
+
+      // Combine basic analysis with AI insights
+      return {
+        ...basicAnalysis,
+        aiCoaching: {
+          primaryFeedback: aiCoaching.feedback?.[0] || basicAnalysis.feedback[0],
+          technicalCues: aiCoaching.technicalCues || [],
+          encouragement: aiCoaching.encouragement || 'Keep up the good work!',
+          nextSteps: aiCoaching.nextSteps || 'Focus on maintaining proper form',
+          formRating: aiCoaching.formRating || 'good',
+          priority: aiCoaching.priority || 'medium'
+        },
+        enhancedFeedback: aiCoaching.feedback || basicAnalysis.feedback,
+        aiGenerated: aiCoaching.aiGenerated || false
+      };
+    } catch (error) {
+      logger.error('AI-enhanced analysis error:', error);
+      // Return basic analysis if AI fails
+      return this.analyzePose(poseData, repNumber);
+    }
   }
 
   // Evaluate form based on exercise-specific rules
