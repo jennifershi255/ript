@@ -116,6 +116,7 @@ app.use('*', (req, res) => {
 
 // MongoDB connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/technova-workout';
+console.log("MONGODB_URI from env:", process.env.MONGODB_URI);
 mongoose.connect(MONGODB_URI)
 .then(() => {
   logger.info('Connected to MongoDB');
