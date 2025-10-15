@@ -1,11 +1,11 @@
 <p align="center">
   <a href="https://youtu.be/j7Nu_Se_hNM">
-    <img src="https://img.youtube.com/vi/j7Nu_Se_hNM/0.jpg" width="470"/>
+    <img src="https://img.youtube.com/vi/j7Nu_Se_hNM/0.jpg" width="430"/>
   </a>
 </p>
 
 <p align="center">
-  👉 <a>Check out the Demo.</a>
+  <a><b>Check out the Demo.</b></a>
 </p>
 
 # The Why.
