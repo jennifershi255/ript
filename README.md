@@ -1,4 +1,8 @@
-[![Check out the demo.](https://img.youtube.com/vi/j7Nu_Se_hNM/0.jpg)](https://youtu.be/j7Nu_Se_hNM)
+<p align="center">
+  <a href="https://youtu.be/j7Nu_Se_hNM" target="_blank">
+    <img src="https://img.youtube.com/vi/j7Nu_Se_hNM/0.jpg" alt="Check out the Demo." width="560" />
+  </a>
+</p>
 
 # The Why.
 Gyms can be scary. We’ve all felt it: walking in, not knowing how to use a machine, feeling eyes on us, worrying if we’re doing it “right.” Turns out, The Times says 3 out of 4 women avoid gyms for those exact reasons. Spoiler: that includes all four of us. Add in the cost (women-only gyms often start at $50/month) and the fact that working out at home is harder than it looks… and suddenly staying active feels like an uphill battle. We’ve had injuries, we’ve had moments of frustration staring at a YouTube video that doesn’t look anything like our bodies. We wanted something better. Something that feels supportive, safe, and built for real people; not just athletes or influencers.
